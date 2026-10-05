@@ -6,6 +6,56 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class LyriconSongStateTest {
+    @Test fun `subtitle follows live switches and restores cached translation without reloading`() {
+        val output = mutableListOf<Song?>()
+        val state = LyriconSongState(output::add)
+        val native = Song(id = "1", lyrics = listOf(RichLyricLine(
+            text = "Hello", translation = "你好", roma = "hello",
+            secondary = "backing", isAlignedRight = true,
+        )))
+        state.metadata(Song(id = "1"))
+        state.lyrics(native, installed = true)
+        assertNull(output.last()?.lyrics?.single()?.translation)
+        state.auxiliary(LyriconAuxiliarySelection(translation = true))
+        assertEquals("你好", output.last()?.lyrics?.single()?.translation)
+        state.auxiliary(LyriconAuxiliarySelection())
+        assertNull(output.last()?.lyrics?.single()?.translation)
+        state.auxiliary(LyriconAuxiliarySelection(pronunciation = true))
+        assertEquals("hello", output.last()?.lyrics?.single()?.translation)
+        assertNull(output.last()?.lyrics?.single()?.roma)
+        state.auxiliary(LyriconAuxiliarySelection(translation = true, pronunciation = true))
+        assertEquals("你好", output.last()?.lyrics?.single()?.translation)
+        assertTrue(output.last()?.lyrics?.single()?.isAlignedRight == true)
+        assertEquals("backing", output.last()?.lyrics?.single()?.secondary)
+        assertEquals("你好", native.lyrics?.single()?.translation)
+        assertEquals("hello", native.lyrics?.single()?.roma)
+    }
+
+    @Test fun `selected pronunciation fills a line without translation and hidden words stay hidden`() {
+        val stateOutput = mutableListOf<Song?>()
+        val state = LyriconSongState(stateOutput::add)
+        state.auxiliary(LyriconAuxiliarySelection(translation = true, pronunciation = true))
+        state.metadata(Song(id = "1"))
+        state.lyrics(Song(id = "1", lyrics = listOf(RichLyricLine(text = "字", roma = "zi",
+            translationWords = listOf(io.github.proify.lyricon.lyric.model.LyricWord(text = "stale"))))))
+        assertEquals("zi", stateOutput.last()?.lyrics?.single()?.normalize()?.translation)
+        state.auxiliary(LyriconAuxiliarySelection())
+        assertNull(stateOutput.last()?.lyrics?.single()?.normalize()?.translation)
+        state.metadata(Song(id = "2"))
+        assertTrue(stateOutput.last()?.lyrics.isNullOrEmpty())
+    }
+
+    @Test fun `new lyric replacement cannot borrow subtitles from an earlier version`() {
+        val output = mutableListOf<Song?>()
+        val state = LyriconSongState(output::add)
+        state.auxiliary(LyriconAuxiliarySelection(translation = true))
+        state.metadata(Song(id = "1"))
+        state.lyrics(Song(id = "1", lyrics = listOf(RichLyricLine(text = "old", translation = "旧"))), installed = true)
+        state.lyrics(lyrics("1", "replacement"), installed = true)
+        assertEquals("replacement", output.last()?.lyrics?.single()?.text)
+        assertNull(output.last()?.lyrics?.single()?.translation)
+    }
+
     private fun lyrics(id: String, text: String) = Song(id = id, duration = 3000,
         lyrics = listOf(RichLyricLine(begin = 0, end = 3000, text = text)))
 

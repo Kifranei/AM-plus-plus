@@ -10,8 +10,15 @@ internal class LyriconSongState(private val publish: (Song?) -> Unit) {
     private val installedIds = HashSet<String>()
     private var metadata: Song? = null
     private var sent: Song? = null
+    private var auxiliary = LyriconAuxiliarySelection()
     val currentId: String? get() = metadata?.id
     val hasLyrics: Boolean get() = !metadata?.id?.let(songs::get)?.lyrics.isNullOrEmpty()
+
+    fun auxiliary(selection: LyriconAuxiliarySelection) {
+        if (selection == auxiliary) return
+        auxiliary = selection
+        sendCurrent()
+    }
 
     fun metadata(song: Song?): Boolean {
         val changed = song?.id != metadata?.id
@@ -31,7 +38,7 @@ internal class LyriconSongState(private val publish: (Song?) -> Unit) {
         val base = metadata
         val lyrics = base?.id?.let(songs::get)
         val next = base?.copy(duration = base.duration.takeIf { it > 0 } ?: lyrics?.duration ?: 0L,
-            lyrics = lyrics?.lyrics)
+            lyrics = lyrics?.lyrics)?.let(auxiliary::apply)
         if (next != sent) { sent = next; publish(next) }
     }
 }

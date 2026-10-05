@@ -19,13 +19,16 @@ class EmbeddedSettingsDraftTest {
         assertFalse(draft.update(pending))
         assertFalse(draft.updateIosMediaControls(true))
         assertFalse(draft.updateLyricon(true))
+        assertFalse(draft.updateUnrestrictedLyricsSharing(true))
         assertEquals(ModuleSettings(), stored)
         writable = true
         assertTrue(draft.save())
-        assertEquals(pending.copy(iosMediaControlsEnabled = true, lyriconEnabled = true), stored)
+        assertEquals(pending.copy(iosMediaControlsEnabled = true, lyriconEnabled = true, unrestrictedLyricsSharingEnabled = true), stored)
         assertTrue(draft.updateIosMediaControls(false))
-        assertEquals(pending.copy(lyriconEnabled = true), stored)
+        assertEquals(pending.copy(lyriconEnabled = true, unrestrictedLyricsSharingEnabled = true), stored)
         assertTrue(draft.updateLyricon(false))
+        assertEquals(pending.copy(unrestrictedLyricsSharingEnabled = true), stored)
+        assertTrue(draft.updateUnrestrictedLyricsSharing(false))
         assertEquals(pending, stored)
     }
 

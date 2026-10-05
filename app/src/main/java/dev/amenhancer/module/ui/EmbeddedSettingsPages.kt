@@ -252,6 +252,11 @@ internal fun EmbeddedSettingsHost.showSettingsDialog(activity: Activity) {
                             Toast.makeText(activity, "保存 AM++ 设置失败", Toast.LENGTH_SHORT).show()
                         }
                     },
+                    onLyricsSharingChanged = { enabled ->
+                        if (!draft.updateUnrestrictedLyricsSharing(enabled)) {
+                            Toast.makeText(activity, "保存 AM++ 设置失败", Toast.LENGTH_SHORT).show()
+                        }
+                    },
                     onOpenCustomLyrics = {
                         page = EmbeddedSettingsPage.CUSTOM_LYRICS
                         renderPage()
@@ -321,6 +326,7 @@ internal fun EmbeddedSettingsHost.renderEmbeddedMainPage(
         onCellularDataEntryChanged: (Boolean) -> Unit,
         onIosMediaControlsChanged: (Boolean) -> Unit,
         onLyriconChanged: (Boolean) -> Unit,
+        onLyricsSharingChanged: (Boolean) -> Unit,
         onOpenCustomLyrics: () -> Unit,
         onChooseFont: () -> Unit,
         onClearFont: () -> Unit,
@@ -455,6 +461,18 @@ internal fun EmbeddedSettingsHost.renderEmbeddedMainPage(
                 ),
             ) {
                 onLyriconChanged(it)
+                pageRefresh?.invoke()
+            })
+            addView(embeddedDivider(activity))
+            addView(embeddedSettingRow(
+                activity,
+                "解除歌词分享限制",
+                "支持系统图片分享与保存歌词卡片 · 重开 Apple Music 后生效",
+                settings.unrestrictedLyricsSharingEnabled,
+                iconTint = EmbeddedSettingsPalette.accent,
+                iconDrawable = EmbeddedGlyphDrawable(EmbeddedGlyphKind.Music, EmbeddedSettingsPalette.accent),
+            ) {
+                onLyricsSharingChanged(it)
                 pageRefresh?.invoke()
             })
             addView(embeddedDivider(activity))
@@ -895,4 +913,3 @@ internal fun EmbeddedSettingsHost.embeddedCustomLyricsSourceName(source: String)
         CustomLyricsSources.LUNABEAT -> "Lunabeat"
         else -> "手动 TTML"
     }
-

@@ -35,6 +35,8 @@ internal class AppleMusicLyriconTarget(
     private var playback: PlaybackState? = null
     private var session: Any? = null
     private val state = LyriconSongState { song ->
+        provider?.player?.setDisplayTranslation(song?.lyrics.orEmpty().any { !it.translation.isNullOrBlank() })
+        provider?.player?.setDisplayRoma(false)
         provider?.player?.setSong(song)
         val lines = song?.lyrics.orEmpty()
         val mismatches = lines.count { line -> !line.words.isNullOrEmpty() &&
@@ -74,7 +76,14 @@ internal class AppleMusicLyriconTarget(
             val unwrap = pointer.getMethod("get")
             val selectTranslation = nativeType.getMethod("setTranslation", String::class.java)
             val systemLanguage = model.getMethod("getCurrentSystemLyricsLanguage")
-            var requestModel: Any? = null
+            val pronunciationLanguages = nativeType.getMethod("getPronunciationLanguages")
+            val selectPronunciation = nativeType.getMethod("setPronunciation", String::class.java)
+            val matchPronunciation = loader.loadClass(names.getString("localeUtilClass"))
+                .getMethod("matchToSystemLyricsScript", pronunciationLanguages.returnType)
+            val translationSelected = model.getMethod("getTranslationSelectedLiveResult")
+            val pronunciationSelected = model.getMethod("getPronunciationSelectedLiveResult")
+            val observerType = loader.loadClass(names.getString("observerClass"))
+            val requestModel = constructor.newInstance(application)
             var requestedId: String? = null
             fun request() {
                 val current = currentSong.current() ?: return
@@ -82,8 +91,7 @@ internal class AppleMusicLyriconTarget(
                 if (id != state.currentId || state.hasLyrics || requestedId == id || !item.isInstance(current.item)) return
                 requestedId = id
                 runCatching {
-                    val instance = requestModel ?: constructor.newInstance(application).also { requestModel = it }
-                    loadLyrics.invoke(instance, current.item)
+                    loadLyrics.invoke(requestModel, current.item)
                 }.onFailure { requestedId = null; ModernXposedRuntime.log("lyricon lyric request failed", it) }
             }
             fun hook(method: java.lang.reflect.Method, callback: ModernMethodHook) {
@@ -104,7 +112,10 @@ internal class AppleMusicLyriconTarget(
                     if (param.throwable == null && param.thisObject === requestModel) runCatching {
                         val ptr = param.args.getOrNull(0) ?: return@runCatching
                         val language = systemLanguage.invoke(param.thisObject) as String
-                        selectTranslation.invoke(unwrap.invoke(ptr), language)
+                        val native = unwrap.invoke(ptr) ?: return@runCatching
+                        selectTranslation.invoke(native, language)
+                        val pronunciation = matchPronunciation.invoke(null, pronunciationLanguages.invoke(native)) as? String
+                        if (pronunciation != null) selectPronunciation.invoke(native, pronunciation)
                     }.onFailure { ModernXposedRuntime.log("lyricon translation selection failed", it) }
                     if (param.throwable == null) capture(param.args.getOrNull(0))
                 }
@@ -155,6 +166,21 @@ internal class AppleMusicLyriconTarget(
             provider = LyriconFactory.createProvider(application,
                 providerPackageName = ModuleConstants.MODULE_PACKAGE, playerPackageName = application.packageName)
             scope.onClose { provider?.destroy(); provider = null; main.removeCallbacks(tick) }
+            var selection = LyriconAuxiliarySelection()
+            fun updateSelection(next: LyriconAuxiliarySelection) {
+                selection = next
+                main.post {
+                    if (!scope.isActive) return@post
+                    state.auxiliary(next)
+                    ModernXposedRuntime.log("lyricon: auxiliary translation=${next.translation} pronunciation=${next.pronunciation}")
+                }
+            }
+            scope.onClose(observeLyriconSelection(requestModel, translationSelected, observerType) {
+                updateSelection(selection.copy(translation = it))
+            })
+            scope.onClose(observeLyriconSelection(requestModel, pronunciationSelected, observerType) {
+                updateSelection(selection.copy(pronunciation = it))
+            })
             provider?.service?.addConnectionListener {
                 onConnected { ModernXposedRuntime.log("lyricon: connected to system central service") }
                 onReconnected { ModernXposedRuntime.log("lyricon: reconnected to system central service") }
@@ -174,7 +200,7 @@ internal class AppleMusicLyriconTarget(
             scope.onClose(subscription::close)
             scope.activate()
             main.post {
-                provider?.player?.setDisplayTranslation(true)
+                provider?.player?.setDisplayTranslation(false)
                 provider?.player?.setDisplayRoma(false)
                 provider?.register()
             }

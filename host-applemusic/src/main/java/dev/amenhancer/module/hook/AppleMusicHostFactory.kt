@@ -69,6 +69,8 @@ object AppleMusicHostFactory {
             currentSong = currentSong,
             playerAudioOutput = PlayerOutputSwitcherInstaller(application, classLoader, build),
             lyricon = AppleMusicLyriconTarget(application, classLoader, build, resolver, currentSong),
+            audioQualityDialog = AppleMusicAudioQualityDialogTarget(application, build),
+            lyricsSharing = AppleMusicLyricsSharingTarget(application, classLoader, build),
             dualPane = if (profile.family == "fragment-content") FragmentDualPaneTarget(resolver, build)
                 else AppleMusicDualPaneTarget(resolver, build),
             editorialVideo = editorialVideoTargetForFamily(profile.family) {

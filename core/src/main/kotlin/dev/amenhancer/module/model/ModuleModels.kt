@@ -22,6 +22,8 @@ data class ModuleSettings(
     val iosMediaControlsEnabled: Boolean = false,
     /** Publishes Apple Music lyrics and playback state to Lyricon. */
     val lyriconEnabled: Boolean = false,
+    /** Adds unrestricted image sharing and saving to the native lyric selection sheet. */
+    val unrestrictedLyricsSharingEnabled: Boolean = false,
     val lyricBlurRadiusOffsetPx: Int = 0,
     /** Fixed logical density for Apple Music; 0 follows the system density. */
     val appleMusicDpiOverrideDpi: Int = FOLLOW_SYSTEM_APPLE_MUSIC_DPI,

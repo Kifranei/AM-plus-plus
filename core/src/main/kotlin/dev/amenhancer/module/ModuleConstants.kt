@@ -20,4 +20,6 @@ object ModuleConstants {
     const val FEATURE_CELLULAR_DATA_ENTRY = "cellular_data_entry"
     const val FEATURE_PLAYER_AUDIO_OUTPUT = "player_audio_output"
     const val FEATURE_LYRICON = "lyricon"
+    const val FEATURE_AUDIO_QUALITY_GLASS = "audio_quality_glass"
+    const val FEATURE_LYRICS_SHARING = "lyrics_sharing"
 }

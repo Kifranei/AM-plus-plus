@@ -10,6 +10,19 @@ import org.junit.Test
 
 class ModuleSettingsSchemaTest {
     @Test
+    fun `unrestricted lyric sharing is opt-in and independent of lyric replacement and provider`() {
+        assertFalse(ModuleSettingsSchema.decode(emptyMap<String, Any>()).unrestrictedLyricsSharingEnabled)
+        assertFalse(ModuleSettingsSchema.decode(mapOf("unrestricted_lyrics_sharing_enabled" to "true")).unrestrictedLyricsSharingEnabled)
+        val enabled = ModuleSettings(unrestrictedLyricsSharingEnabled = true)
+        assertEquals(enabled, ModuleSettingsSchema.decode(ModuleSettingsSchema.encodeOrdinarySettings(enabled)))
+        val upgraded = ModuleSettingsSchema.upgrade(mapOf("unrestricted_lyrics_sharing_enabled" to true),
+            mapOf("custom_lyrics_enabled" to true))!!
+        assertEquals(true, upgraded["unrestricted_lyrics_sharing_enabled"])
+        assertEquals(false, upgraded["custom_lyrics_enabled"])
+        assertEquals(false, upgraded["lyricon_enabled"])
+    }
+
+    @Test
     fun `media controls and Lyricon are independent opt-in settings`() {
         val defaults = ModuleSettingsSchema.decode(emptyMap<String, Any>())
         assertFalse(defaults.iosMediaControlsEnabled)
@@ -108,6 +121,7 @@ class ModuleSettingsSchemaTest {
                 "force_cellular_data_entry_enabled" to false,
                 "ios_media_controls_enabled" to false,
                 "lyricon_enabled" to false,
+                "unrestricted_lyrics_sharing_enabled" to false,
                 "lyric_blur_radius_offset_px" to 6,
                 "apple_music_dpi_override_dpi" to 0,
                 "title_correction_enabled" to false,
@@ -149,6 +163,7 @@ class ModuleSettingsSchemaTest {
                 "force_cellular_data_entry_enabled" to false,
                 "ios_media_controls_enabled" to false,
                 "lyricon_enabled" to false,
+                "unrestricted_lyrics_sharing_enabled" to false,
                 "lyric_blur_radius_offset_px" to 0,
                 "apple_music_dpi_override_dpi" to 0,
                 "title_correction_enabled" to false,

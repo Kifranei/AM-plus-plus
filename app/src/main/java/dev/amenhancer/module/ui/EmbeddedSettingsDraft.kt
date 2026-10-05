@@ -24,5 +24,8 @@ internal class EmbeddedSettingsDraft(
     fun updateLyricon(enabled: Boolean): Boolean =
         update(settings.copy(lyriconEnabled = enabled))
 
+    fun updateUnrestrictedLyricsSharing(enabled: Boolean): Boolean =
+        update(settings.copy(unrestrictedLyricsSharingEnabled = enabled))
+
     fun save(): Boolean = persist(settings)
 }

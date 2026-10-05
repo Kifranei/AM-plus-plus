@@ -112,6 +112,7 @@ class OrdinarySettingsWritePolicyTest {
                 "force_cellular_data_entry_enabled" to false,
                 "ios_media_controls_enabled" to false,
                 "lyricon_enabled" to false,
+                "unrestricted_lyrics_sharing_enabled" to false,
                 "lyric_blur_radius_offset_px" to 6,
                 "apple_music_dpi_override_dpi" to 0,
                 "title_correction_enabled" to false,

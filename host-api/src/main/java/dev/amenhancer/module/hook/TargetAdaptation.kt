@@ -41,6 +41,12 @@ data class TargetAdaptation(
     val lyricon: LyriconTarget = LyriconTarget {
         TargetCapabilityInstall.Unsupported("Lyricon provider was not configured")
     },
+    val audioQualityDialog: AudioQualityDialogTarget = AudioQualityDialogTarget {
+        TargetCapabilityInstall.Unsupported("Audio quality dialog was not configured")
+    },
+    val lyricsSharing: LyricsSharingTarget = LyricsSharingTarget {
+        TargetCapabilityInstall.Unsupported("Lyrics sharing was not configured")
+    },
 ) {
 }
 
@@ -88,6 +94,14 @@ fun interface LyriconTarget {
     fun install(): TargetCapabilityInstall
 }
 
+fun interface AudioQualityDialogTarget {
+    fun install(present: (AudioQualityDialogSurface) -> Boolean): TargetCapabilityInstall
+}
+
+fun interface LyricsSharingTarget {
+    fun install(export: (LyricsShareImage, Boolean) -> Unit): TargetCapabilityInstall
+}
+
 sealed interface TargetCapabilityInstall {
     val message: String
 
@@ -109,4 +123,3 @@ sealed interface TargetCapabilityInstall {
         }
     }
 }
-
