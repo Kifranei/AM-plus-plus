@@ -18,4 +18,6 @@ object ModuleConstants {
     const val FEATURE_TITLE_CORRECTION = "title_correction"
     const val FEATURE_APPLE_MUSIC_DPI = "apple_music_dpi"
     const val FEATURE_CELLULAR_DATA_ENTRY = "cellular_data_entry"
+    const val FEATURE_PLAYER_AUDIO_OUTPUT = "player_audio_output"
+    const val FEATURE_LYRICON = "lyricon"
 }

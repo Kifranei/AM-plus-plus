@@ -1,5 +1,16 @@
 # Third-Party Notices
 
+## LyricProvider / Lyricon
+
+The Apple Music Lyricon integration follows tomakino/LyricProvider, commit
+`be4c131f9303966e2bb146c3e7c0665cf69585cb`, and uses the official
+`io.github.proify.lyricon:provider:0.1.70` SDK (including its lyric model).
+Copyright 2026 Proify, Tomakino. Licensed under Apache-2.0.
+AM++ adds Modern Xposed hooks, exact 1606 contracts, bounded in-memory song caching,
+stale-song rejection, and synchronization from the native system media session.
+Source: https://github.com/tomakino/LyricProvider
+License: https://www.apache.org/licenses/LICENSE-2.0
+
 ## AMLyricBlur
 
 This project includes code adapted from `a23bc/amlyricblur`, commit

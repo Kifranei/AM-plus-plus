@@ -1,5 +1,18 @@
 {
   "schemaVersion": 1,
+  "audioOutput": {
+    "buttonClass": "com.apple.android.music.player.mediarouter.cast.CustomMediaRouteButton",
+    "buttonId": "media_route_button",
+    "lyricsId": "player_lyrics",
+    "layout": "constraint_player_media_controls"
+  },
+  "lyricon": {
+    "viewModelClass": "com.apple.android.music.player.viewmodel.PlayerLyricsViewModel",
+    "buildMethod": "buildTimeRangeToLyricsMap",
+    "installedPointerField": "h1",
+    "loadMethod": "loadLyrics",
+    "itemClass": "com.apple.android.music.model.PlaybackItem"
+  },
   "hookProfileId": "am-7.0.0-beta-1606",
   "capabilities": {
     "glass": true,
@@ -1871,7 +1884,11 @@
       "Lcom/apple/android/music/ttml/javanative/model/SongInfo$SongInfoNative;": [
         "getAdamId()J",
         "setAdamId(J)V",
-        "getSections()Lcom/apple/android/music/ttml/javanative/model/LyricsSectionVector;"
+        "getSections()Lcom/apple/android/music/ttml/javanative/model/LyricsSectionVector;",
+        "getDuration()I",
+        "getAgents()Lcom/apple/android/music/ttml/javanative/model/LyricsAgentVector;",
+        "getAgent(Ljava/lang/String;)Lcom/apple/android/music/ttml/javanative/model/LyricsAgent$LyricsAgentPtr;",
+        "setTranslation(Ljava/lang/String;)Z"
       ],
       "Lcom/apple/android/music/player/fragment/PlayerMainFragment;": [
         "j1(Lcom/apple/android/music/storeapi/model/BagConfig;)V",
@@ -2161,6 +2178,65 @@
         "getSubscriptionStoreId()Ljava/lang/String;",
         "getPersistentId()J",
         "getArtistName()Ljava/lang/String;"
+      ],
+      "Lcom/apple/android/music/player/mediarouter/cast/CustomMediaRouteButton;": [
+        "showDialog()Z"
+      ],
+      "Landroidx/mediarouter/app/c;": [
+        "setRemoteIndicatorDrawableInternal(Landroid/graphics/drawable/Drawable;)V",
+        "onAttachedToWindow()V",
+        "performClick()Z",
+        "updateContentDescription()V"
+      ],
+      "Lcom/apple/android/music/player/viewmodel/PlayerLyricsViewModel;": [
+        "<init>(Landroid/app/Application;)V",
+        "buildTimeRangeToLyricsMap(Lcom/apple/android/music/ttml/javanative/model/SongInfo$SongInfoPtr;)V",
+        "loadLyrics(Lcom/apple/android/music/model/PlaybackItem;)V",
+        "getCurrentSystemLyricsLanguage()Ljava/lang/String;"
+      ],
+      "Lcom/apple/android/music/ttml/javanative/model/SongInfo$SongInfoPtr;": [
+        "get()Lcom/apple/android/music/ttml/javanative/model/SongInfo$SongInfoNative;"
+      ],
+      "Lcom/apple/android/music/ttml/javanative/model/LyricsSectionVector;": [
+        "size()J",
+        "get(J)Lcom/apple/android/music/ttml/javanative/model/LyricsSection$LyricsSectionPtr;"
+      ],
+      "Lcom/apple/android/music/ttml/javanative/model/LyricsLineVector;": [
+        "size()J",
+        "get(J)Lcom/apple/android/music/ttml/javanative/model/LyricsLine$LyricsLinePtr;"
+      ],
+      "Lcom/apple/android/music/ttml/javanative/model/LyricsWordVector;": [
+        "size()J",
+        "get(J)Lcom/apple/android/music/ttml/javanative/model/LyricsWord$LyricsWordPtr;"
+      ],
+      "Lcom/apple/android/music/ttml/javanative/model/LyricsAgentVector;": [
+        "size()J",
+        "get(J)Lcom/apple/android/music/ttml/javanative/model/LyricsAgent$LyricsAgentPtr;"
+      ],
+      "Lcom/apple/android/music/ttml/javanative/model/LyricsTiming;": [
+        "getEnd()I",
+        "getAgent()Ljava/lang/String;",
+        "getBegin()I",
+        "getDuration()I"
+      ],
+      "Lcom/apple/android/music/ttml/javanative/model/LyricsSection$LyricsSectionNative;": [
+        "getLines()Lcom/apple/android/music/ttml/javanative/model/LyricsLineVector;"
+      ],
+      "Lcom/apple/android/music/ttml/javanative/model/LyricsLine$LyricsLineNative;": [
+        "getHtmlTranslationLineText()Ljava/lang/String;",
+        "getHtmlBackgroundVocalsLineText()Ljava/lang/String;",
+        "getHtmlPronunciationLineText()Ljava/lang/String;",
+        "getBackgroundWords(Z)Lcom/apple/android/music/ttml/javanative/model/LyricsWordVector;",
+        "getHtmlLineText()Ljava/lang/String;",
+        "getWords()Lcom/apple/android/music/ttml/javanative/model/LyricsWordVector;",
+        "getHtmlTranslatedBackgroundVocalsLineText()Ljava/lang/String;"
+      ],
+      "Lcom/apple/android/music/ttml/javanative/model/LyricsWord$LyricsWordNative;": [
+        "getHtmlLineText()Ljava/lang/String;"
+      ],
+      "Lcom/apple/android/music/ttml/javanative/model/LyricsAgent$LyricsAgentNative;": [
+        "getType_()J",
+        "getId()Ljava/lang/String;"
       ]
     },
     "fields": {
@@ -2216,7 +2292,8 @@
       "res/layout/mini_player.xml",
       "res/layout-w675dp-v13/mini_player.xml",
       "res/layout-w735dp-v13/mini_player.xml",
-      "res/layout-w830dp-v13/mini_player.xml"
+      "res/layout-w830dp-v13/mini_player.xml",
+      "res/layout/constraint_player_media_controls.xml"
     ],
     "catalog_query": {
       "owner": "Lw9/Q;",
@@ -2243,7 +2320,8 @@
         "n0": "Lq8/Y4;",
         "E0": "Lcom/apple/android/music/player/fragment/PlayerLyricsViewFragment$x;",
         "F0": "Lcom/apple/android/music/player/fragment/PlayerLyricsViewFragment$x;",
-        "r0": "Lcom/apple/android/music/player/A;"
+        "r0": "Lcom/apple/android/music/player/A;",
+        "h1": "Lcom/apple/android/music/ttml/javanative/model/SongInfo$SongInfoPtr;"
       },
       "Lcom/apple/android/music/player/fragment/PlayerLyricsViewFragment$x;": {
         "a": "I",

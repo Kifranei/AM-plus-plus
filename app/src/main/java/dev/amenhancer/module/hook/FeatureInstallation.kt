@@ -254,6 +254,7 @@ private fun productionFeatureInstallationModule(
             ),
             FeatureInstallationPlan(feature = EditorialVideoFeature()),
             FeatureInstallationPlan(feature = CellularDataEntryFeature()),
+            FeatureInstallationPlan(feature = PlayerAudioOutputFeature()),
             FeatureInstallationPlan(
                 feature = PhoneLiquidGlassFeature(),
                 registerResources = PhoneLiquidGlassResourceHook::install,
@@ -270,6 +271,7 @@ private fun productionFeatureInstallationModule(
             FeatureInstallationPlan(feature = CurrentSongIdentityFeature()),
             FeatureInstallationPlan(feature = TitleCorrectionFeature()),
             FeatureInstallationPlan(feature = CustomLyricsFeature()),
+            FeatureInstallationPlan(feature = LyriconFeature()),
             // The actual resource hook is installed during the Application
             // before-hook; this plan records its final health alongside the
             // regular post-Application features.

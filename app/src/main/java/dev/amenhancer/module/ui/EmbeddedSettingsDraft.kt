@@ -18,5 +18,11 @@ internal class EmbeddedSettingsDraft(
     fun updateCellularDataEntry(enabled: Boolean): Boolean =
         update(settings.copy(forceCellularDataEntryEnabled = enabled))
 
+    fun updateIosMediaControls(enabled: Boolean): Boolean =
+        update(settings.copy(iosMediaControlsEnabled = enabled))
+
+    fun updateLyricon(enabled: Boolean): Boolean =
+        update(settings.copy(lyriconEnabled = enabled))
+
     fun save(): Boolean = persist(settings)
 }

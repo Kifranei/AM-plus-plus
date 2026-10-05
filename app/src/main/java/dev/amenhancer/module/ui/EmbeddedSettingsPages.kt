@@ -242,6 +242,16 @@ internal fun EmbeddedSettingsHost.showSettingsDialog(activity: Activity) {
                             Toast.makeText(activity, "保存 AM++ 设置失败", Toast.LENGTH_SHORT).show()
                         }
                     },
+                    onIosMediaControlsChanged = { enabled ->
+                        if (!draft.updateIosMediaControls(enabled)) {
+                            Toast.makeText(activity, "保存 AM++ 设置失败", Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    onLyriconChanged = { enabled ->
+                        if (!draft.updateLyricon(enabled)) {
+                            Toast.makeText(activity, "保存 AM++ 设置失败", Toast.LENGTH_SHORT).show()
+                        }
+                    },
                     onOpenCustomLyrics = {
                         page = EmbeddedSettingsPage.CUSTOM_LYRICS
                         renderPage()
@@ -309,6 +319,8 @@ internal fun EmbeddedSettingsHost.renderEmbeddedMainPage(
         lyricsCount: Int,
         onSettingsChanged: (ModuleSettings) -> Unit,
         onCellularDataEntryChanged: (Boolean) -> Unit,
+        onIosMediaControlsChanged: (Boolean) -> Unit,
+        onLyriconChanged: (Boolean) -> Unit,
         onOpenCustomLyrics: () -> Unit,
         onChooseFont: () -> Unit,
         onClearFont: () -> Unit,
@@ -338,6 +350,21 @@ internal fun EmbeddedSettingsHost.renderEmbeddedMainPage(
                 ),
             ) {
                 onCellularDataEntryChanged(it)
+                pageRefresh?.invoke()
+            })
+            addView(embeddedDivider(activity))
+            addView(embeddedSettingRow(
+                activity,
+                "使用 iOS 媒体控制按钮",
+                "替换播放页投放按钮并打开系统音频输出面板 · 重开 Apple Music 后生效",
+                settings.iosMediaControlsEnabled,
+                iconTint = EmbeddedSettingsPalette.primary,
+                iconDrawable = EmbeddedGlyphDrawable(
+                    EmbeddedGlyphKind.Music,
+                    EmbeddedSettingsPalette.primary,
+                ),
+            ) {
+                onIosMediaControlsChanged(it)
                 pageRefresh?.invoke()
             })
             // The compensation toggle only matters for the native tablet bar:
@@ -415,6 +442,21 @@ internal fun EmbeddedSettingsHost.renderEmbeddedMainPage(
                     EmbeddedSettingsPalette.accent,
                 ),
             ) { onSettingsChanged(settings.copy(cjkKaraokeAnimationEnabled = it)) })
+            addView(embeddedDivider(activity))
+            addView(embeddedSettingRow(
+                activity,
+                "词幕集成",
+                "向词幕提供歌词、翻译与逐词进度 · 重开 Apple Music 后生效",
+                settings.lyriconEnabled,
+                iconTint = EmbeddedSettingsPalette.accent,
+                iconDrawable = EmbeddedGlyphDrawable(
+                    EmbeddedGlyphKind.Music,
+                    EmbeddedSettingsPalette.accent,
+                ),
+            ) {
+                onLyriconChanged(it)
+                pageRefresh?.invoke()
+            })
             addView(embeddedDivider(activity))
             addView(embeddedSettingRow(
                 activity,

@@ -10,6 +10,37 @@ import org.junit.Test
 
 class ModuleSettingsSchemaTest {
     @Test
+    fun `media controls and Lyricon are independent opt-in settings`() {
+        val defaults = ModuleSettingsSchema.decode(emptyMap<String, Any>())
+        assertFalse(defaults.iosMediaControlsEnabled)
+        assertFalse(defaults.lyriconEnabled)
+        val malformed = ModuleSettingsSchema.decode(mapOf(
+            "ios_media_controls_enabled" to "true",
+            "lyricon_enabled" to 1,
+        ))
+        assertFalse(malformed.iosMediaControlsEnabled)
+        assertFalse(malformed.lyriconEnabled)
+        for (ios in listOf(false, true)) for (lyricon in listOf(false, true)) {
+            val original = ModuleSettings(iosMediaControlsEnabled = ios, lyriconEnabled = lyricon)
+            assertEquals(original, ModuleSettingsSchema.decode(
+                ModuleSettingsSchema.encodeOrdinarySettings(original),
+            ))
+        }
+    }
+
+    @Test
+    fun `integration settings alone identify the stored configuration during upgrade`() {
+        for (key in listOf("ios_media_controls_enabled", "lyricon_enabled")) {
+            val upgraded = ModuleSettingsSchema.upgrade(
+                storedValues = mapOf(key to true),
+                legacyValues = mapOf("dual_pane_enabled" to false),
+            )!!
+            assertEquals(true, upgraded[key])
+            assertEquals(true, upgraded["dual_pane_enabled"])
+        }
+    }
+
+    @Test
     fun `cellular entry defaults off rejects malformed values and round trips`() {
         assertFalse(ModuleSettingsSchema.decode(emptyMap<String, Any>()).forceCellularDataEntryEnabled)
         assertFalse(ModuleSettingsSchema.decode(
@@ -75,6 +106,8 @@ class ModuleSettingsSchemaTest {
                 "cjk_karaoke_animation_enabled" to true,
                 "navigation_compensation_enabled" to false,
                 "force_cellular_data_entry_enabled" to false,
+                "ios_media_controls_enabled" to false,
+                "lyricon_enabled" to false,
                 "lyric_blur_radius_offset_px" to 6,
                 "apple_music_dpi_override_dpi" to 0,
                 "title_correction_enabled" to false,
@@ -114,6 +147,8 @@ class ModuleSettingsSchemaTest {
                 "cjk_karaoke_animation_enabled" to true,
                 "navigation_compensation_enabled" to false,
                 "force_cellular_data_entry_enabled" to false,
+                "ios_media_controls_enabled" to false,
+                "lyricon_enabled" to false,
                 "lyric_blur_radius_offset_px" to 0,
                 "apple_music_dpi_override_dpi" to 0,
                 "title_correction_enabled" to false,

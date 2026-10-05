@@ -18,6 +18,10 @@ data class ModuleSettings(
     val navigationCompensationEnabled: Boolean = false,
     /** Restores native Data settings and the app's cellular availability predicate. */
     val forceCellularDataEntryEnabled: Boolean = false,
+    /** Uses the iOS media control button to open the system audio output picker. */
+    val iosMediaControlsEnabled: Boolean = false,
+    /** Publishes Apple Music lyrics and playback state to Lyricon. */
+    val lyriconEnabled: Boolean = false,
     val lyricBlurRadiusOffsetPx: Int = 0,
     /** Fixed logical density for Apple Music; 0 follows the system density. */
     val appleMusicDpiOverrideDpi: Int = FOLLOW_SYSTEM_APPLE_MUSIC_DPI,

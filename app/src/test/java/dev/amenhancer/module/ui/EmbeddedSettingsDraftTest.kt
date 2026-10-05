@@ -8,6 +8,28 @@ import org.junit.Test
 
 class EmbeddedSettingsDraftTest {
     @Test
+    fun `integration toggles retain pending edits and each other across failed saves`() {
+        var stored = ModuleSettings()
+        var writable = false
+        val draft = EmbeddedSettingsDraft(stored) { next ->
+            if (writable) stored = next
+            writable
+        }
+        val pending = stored.copy(dualPaneEnabled = false, customLyricsEnabled = true)
+        assertFalse(draft.update(pending))
+        assertFalse(draft.updateIosMediaControls(true))
+        assertFalse(draft.updateLyricon(true))
+        assertEquals(ModuleSettings(), stored)
+        writable = true
+        assertTrue(draft.save())
+        assertEquals(pending.copy(iosMediaControlsEnabled = true, lyriconEnabled = true), stored)
+        assertTrue(draft.updateIosMediaControls(false))
+        assertEquals(pending.copy(lyriconEnabled = true), stored)
+        assertTrue(draft.updateLyricon(false))
+        assertEquals(pending, stored)
+    }
+
+    @Test
     fun `cellular toggle preserves pending changes after another row fails to save`() {
         var stored = ModuleSettings()
         var writable = false

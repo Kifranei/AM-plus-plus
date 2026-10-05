@@ -35,6 +35,12 @@ data class TargetAdaptation(
     val cellularDataEntry: CellularDataEntryTarget = CellularDataEntryTarget {
         TargetCapabilityInstall.Degraded("Cellular data entry target was not configured")
     },
+    val playerAudioOutput: PlayerAudioOutputTarget = PlayerAudioOutputTarget {
+        TargetCapabilityInstall.Unsupported("Player audio output was not configured")
+    },
+    val lyricon: LyriconTarget = LyriconTarget {
+        TargetCapabilityInstall.Unsupported("Lyricon provider was not configured")
+    },
 ) {
 }
 
@@ -71,6 +77,14 @@ fun interface HleMetadataTarget {
 }
 
 fun interface CellularDataEntryTarget {
+    fun install(): TargetCapabilityInstall
+}
+
+fun interface PlayerAudioOutputTarget {
+    fun install(): TargetCapabilityInstall
+}
+
+fun interface LyriconTarget {
     fun install(): TargetCapabilityInstall
 }
 
