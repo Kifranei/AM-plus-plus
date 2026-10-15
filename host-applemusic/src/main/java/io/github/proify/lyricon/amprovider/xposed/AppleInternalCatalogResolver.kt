@@ -873,14 +873,14 @@ internal class AppleInternalCatalogResolver(
             ":ARTIST_ALIAS:" in key
 
         internal const val LOCALIZED_BATCH_SIZE = 50
-        internal const val MAX_LOCALIZED_BATCHES_RUNNING = 4
+        internal const val MAX_LOCALIZED_BATCHES_RUNNING = 3
         internal const val MAX_BACKGROUND_LOCALIZED_BATCHES_RUNNING = 2
         internal const val MAX_LOCKED_ISRC_FALLBACK_RUNNING = 2
-        internal const val LOCALIZED_BATCH_DELAY_MS = 32L
+        internal const val LOCALIZED_BATCH_DELAY_MS = 64L
         internal const val ORIGINAL_ENTITY_BATCH_SIZE = 50
-        internal const val MAX_ORIGINAL_ENTITY_BATCHES_RUNNING = 3
+        internal const val MAX_ORIGINAL_ENTITY_BATCHES_RUNNING = 2
         internal const val MAX_BACKGROUND_ORIGINAL_ENTITY_BATCHES_RUNNING = 2
-        internal const val ORIGINAL_ENTITY_BATCH_DELAY_MS = 32L
+        internal const val ORIGINAL_ENTITY_BATCH_DELAY_MS = 80L
         internal const val QUERY_SLOW_RESPONSE_MS = 6_000L
         internal const val QUERY_TIMEOUT_MS = 30_000L
         internal const val ARTIST_ALIAS_CACHE_SCHEMA = "V2"

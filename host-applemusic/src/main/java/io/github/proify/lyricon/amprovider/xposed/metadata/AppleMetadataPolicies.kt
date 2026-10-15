@@ -418,6 +418,48 @@ internal fun collectionPageOriginalResolutionMode(
 ): InAppOriginalResolutionMode =
     AppleMetadataResolutionEngine.collectionPageOriginalResolutionMode(pageType)
 
+/** Delay before album/artist page bulk original-script lookups so the first frame can settle. */
+internal const val COLLECTION_PAGE_METADATA_SETTLE_MS = 400L
+
+/** IDs that still need a catalog round-trip; already-corrected / resolved IDs are dropped. */
+internal fun collectionPageIdsNeedingResolution(
+    mediaIds: Collection<String>,
+    shouldRequestOverride: (String) -> Boolean,
+): List<String> = mediaIds.asSequence()
+    .map(String::trim)
+    .filter { it.isNotEmpty() && it.all(Char::isDigit) }
+    .distinct()
+    .filter(shouldRequestOverride)
+    .toList()
+
+/** True when the live attribute texts already match the alias (skip setter / rebind work). */
+internal fun mediaApiAliasAlreadyApplied(
+    kind: InAppLibraryEntityKind,
+    currentName: String?,
+    currentArtist: String?,
+    currentAlbum: String?,
+    alias: AppleInternalCatalogResolver.Alias,
+): Boolean {
+    val expectedName = when (kind) {
+        InAppLibraryEntityKind.ALBUM -> alias.album.ifBlank { alias.title }
+        InAppLibraryEntityKind.SONG -> alias.title
+        InAppLibraryEntityKind.ARTIST -> alias.artist.ifBlank { alias.title }
+    }.trim()
+    val expectedArtist = alias.artist.trim()
+    val expectedAlbum = alias.album.trim()
+    if (expectedName.isNotEmpty() && currentName?.trim() != expectedName) return false
+    if (expectedArtist.isNotEmpty() && currentArtist?.trim() != expectedArtist) return false
+    if (
+        kind == InAppLibraryEntityKind.SONG &&
+        expectedAlbum.isNotEmpty() &&
+        currentAlbum?.trim() != expectedAlbum
+    ) {
+        return false
+    }
+    return expectedName.isNotEmpty() || expectedArtist.isNotEmpty() ||
+        (kind == InAppLibraryEntityKind.SONG && expectedAlbum.isNotEmpty())
+}
+
 internal fun localizedVisibleText(
     field: VisibleTextField,
     alias: AppleInternalCatalogResolver.Alias,

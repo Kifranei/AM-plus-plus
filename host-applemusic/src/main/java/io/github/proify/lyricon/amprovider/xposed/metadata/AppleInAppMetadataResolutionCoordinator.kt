@@ -68,7 +68,8 @@ internal class AppleInAppMetadataResolutionCoordinator(
             InAppOriginalResolutionMode.AFTER_LOCALIZED,
     ) {
         if (priority == AppleInternalCatalogResolver.RequestPriority.BACKGROUND) return
-        host.enrichLibraryEntitiesForResolution(mediaIds)
+        // Queue first; enrich on the posted runnable so player-enter / page-enter callers do not
+        // pay reflection association walks synchronously on the frame that scheduled work.
         val unresolvedIds = normalizedRecyclerBindingMediaIds(mediaIds)
             .filter(::shouldRequestOverride)
         if (unresolvedIds.isEmpty()) return
@@ -104,6 +105,7 @@ internal class AppleInAppMetadataResolutionCoordinator(
                 .entries
                 .sortedByDescending { it.key.priority.ordinal }
                 .forEach { (resolution, pendingIds) ->
+                    host.enrichLibraryEntitiesForResolution(pendingIds)
                     val stillUnresolved = pendingIds.filter(::shouldRequestOverride)
                     if (stillUnresolved.isNotEmpty()) {
                         ensureOverrides(

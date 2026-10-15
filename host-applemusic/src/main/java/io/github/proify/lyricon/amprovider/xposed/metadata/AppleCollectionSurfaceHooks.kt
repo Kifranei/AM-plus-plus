@@ -771,32 +771,38 @@ internal class AppleCollectionSurfaceHooks(
                 collectionPageBoundResolutionStates[controller]?.pagePreload?.drain().orEmpty()
             }
             if (pageMediaIds.isEmpty()) return@pageWork
-            host.markMetadataVisible(pageMediaIds)
-            host.enrichLibraryEntitiesForResolution(pageMediaIds)
+            // Warm entity attributes from cache without forcing controller rebuilds during enter.
             pageMediaIds.forEach { mediaId ->
                 host.effectiveAlias(mediaId)?.let { alias ->
-                    host.applyAliasToMetadataRefs(
-                        mediaId = mediaId,
-                        alias = alias,
-                        notifyModelChange = true,
-                    )
+                    librarySurfaceHooks.applyAliasToEntityRefs(mediaId, alias)
                 }
             }
-            host.scheduleMetadataResolution(
+            val unresolved = collectionPageIdsNeedingResolution(
                 mediaIds = pageMediaIds,
+                shouldRequestOverride = host::shouldRequestOverride,
+            )
+            if (unresolved.isEmpty()) return@pageWork
+            host.markMetadataVisible(unresolved)
+            host.enrichLibraryEntitiesForResolution(unresolved)
+            host.scheduleMetadataResolution(
+                mediaIds = unresolved,
                 priority = AppleInternalCatalogResolver.RequestPriority.ACTIVE_PAGE,
                 originalResolutionMode =
                     AppleMetadataResolutionEngine.collectionPageOriginalResolutionMode(pageType),
             )
         }
-        dispatchSurfaceWork(
-            kind = AppleMetadataRefreshKind.COLLECTION_PAGE_RESOLUTION,
-            target = controller,
-            priority = AppleInternalCatalogResolver.RequestPriority.ACTIVE_PAGE,
-            originalResolutionMode =
-                AppleMetadataResolutionEngine.collectionPageOriginalResolutionMode(pageType),
-            work = pageWork,
-        )
+        // Defer past the first paint / player-enter animation so weaker SoCs are not hitching
+        // on bulk original-region lookups while the transition is still running.
+        runtime.mainHandler.postDelayed({
+            dispatchSurfaceWork(
+                kind = AppleMetadataRefreshKind.COLLECTION_PAGE_RESOLUTION,
+                target = controller,
+                priority = AppleInternalCatalogResolver.RequestPriority.ACTIVE_PAGE,
+                originalResolutionMode =
+                    AppleMetadataResolutionEngine.collectionPageOriginalResolutionMode(pageType),
+                work = pageWork,
+            )
+        }, COLLECTION_PAGE_METADATA_SETTLE_MS)
     }
 
     private fun onCollectionPageRowBound(mediaId: String, entity: Any, pageType: String) {
@@ -817,14 +823,23 @@ internal class AppleCollectionSurfaceHooks(
             host.enrichLibraryEntitiesForResolution(listOf(mediaId))
             val alias = host.effectiveAlias(mediaId)
             if (alias != null) {
-                host.applyAliasToMetadataRefs(mediaId, alias, notifyModelChange = true)
+                // Prefer local entity + data-binding updates over a full surface fan-out /
+                // controller rebuild on every first bind (expensive on weak SoCs).
+                librarySurfaceHooks.applyAliasToEntity(
+                    entity = entity,
+                    kind = InAppLibraryEntityKind.SONG,
+                    alias = alias,
+                )
+                dataBindingHooks.refreshDataBindings(mediaId, alias)
             }
-            host.scheduleMetadataResolution(
-                mediaIds = listOf(mediaId),
-                priority = AppleInternalCatalogResolver.RequestPriority.VISIBLE,
-                originalResolutionMode =
-                    AppleMetadataResolutionEngine.collectionPageOriginalResolutionMode(pageType),
-            )
+            if (host.shouldRequestOverride(mediaId)) {
+                host.scheduleMetadataResolution(
+                    mediaIds = listOf(mediaId),
+                    priority = AppleInternalCatalogResolver.RequestPriority.VISIBLE,
+                    originalResolutionMode =
+                        AppleMetadataResolutionEngine.collectionPageOriginalResolutionMode(pageType),
+                )
+            }
             if (BuildConfig.DEBUG) {
                 val attributes = host.mediaApiEntityAttributes(entity)
                 val entityName = attributes?.let {
@@ -932,23 +947,34 @@ internal class AppleCollectionSurfaceHooks(
     ) {
         val title = alias.album.ifBlank { alias.title }.trim()
         val artist = alias.artist.trim()
-        fun apply() {
+        fun applyOnce(): Boolean {
             val originals = librarySurfaceHooks.originalTexts(mediaId)
             val albumOriginals = originals.names + originals.albums
             val artistOriginals = originals.artists
+            var changed = false
             descendantTextViews(root).forEach { view ->
                 val text = view.text?.toString()?.trim().orEmpty()
                 if (text.isEmpty()) return@forEach
                 when {
-                    title.isNotEmpty() && text != title && text in albumOriginals ->
+                    title.isNotEmpty() && text != title && text in albumOriginals -> {
                         view.text = title
-                    artist.isNotEmpty() && text != artist && text in artistOriginals ->
+                        changed = true
+                    }
+                    artist.isNotEmpty() && text != artist && text in artistOriginals -> {
                         view.text = artist
+                        changed = true
+                    }
                 }
             }
+            return changed
         }
-        root.post { apply() }
-        root.postDelayed({ apply() }, 400L)
+        root.post {
+            // Only schedule a follow-up pass when the first write still found stale text;
+            // avoid unconditional setText churn on every header bind.
+            if (applyOnce()) {
+                root.postDelayed({ applyOnce() }, 400L)
+            }
+        }
     }
 
     private fun collectionTarget(role: String): AppleMusicHookTarget? =
@@ -1010,16 +1036,37 @@ internal class AppleCollectionSurfaceHooks(
     }
 }
 
-internal fun collectionPageRowEntity(model: Any, mediaEntityClass: Class<*>): Any? =
-    generateSequence(model.javaClass) { it.superclass }
-        .flatMap { it.declaredFields.asSequence() }
-        .firstOrNull { field -> mediaEntityClass.isAssignableFrom(field.type) }
-        ?.let { field ->
-            runCatching {
-                field.isAccessible = true
-                field.get(model)
-            }.getOrNull()
-        }
+internal fun collectionPageRowEntity(model: Any, mediaEntityClass: Class<*>): Any? {
+    val field = CollectionPageRowEntityFieldCache.fieldFor(model.javaClass, mediaEntityClass)
+        ?: return null
+    return runCatching { field.get(model) }.getOrNull()
+}
+
+/**
+ * Caches the MediaEntity field walk for Epoxy row models. The previous implementation
+ * walked `declaredFields` on every final-bind, which shows up on weak SoCs when scrolling
+ * or entering a collection page.
+ */
+internal object CollectionPageRowEntityFieldCache {
+    private val ABSENT = Any()
+    private val fields = ConcurrentHashMap<Class<*>, Any>()
+
+    fun clearForTests() {
+        fields.clear()
+    }
+
+    fun fieldFor(modelClass: Class<*>, mediaEntityClass: Class<*>): java.lang.reflect.Field? {
+        val cached = fields[modelClass]
+        if (cached === ABSENT) return null
+        if (cached is java.lang.reflect.Field) return cached
+        val found = generateSequence(modelClass) { it.superclass }
+            .flatMap { it.declaredFields.asSequence() }
+            .firstOrNull { field -> mediaEntityClass.isAssignableFrom(field.type) }
+            ?.also { it.isAccessible = true }
+        fields[modelClass] = found ?: ABSENT
+        return found
+    }
+}
 
 internal fun shouldUsePlaylistDirectRowRefresh(
     strategy: InAppLibraryControllerBuildStrategy,

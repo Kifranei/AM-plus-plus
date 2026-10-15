@@ -1168,13 +1168,17 @@ internal class AppleArtistSurfaceHooks(
             .distinct()
             .toList()
         if (pageMediaIds.isEmpty() || !topSongRetryIds.addAll(pageMediaIds)) return
-        host.markMetadataVisible(pageMediaIds)
-        host.enrichLibraryEntitiesForResolution(pageMediaIds)
-        host.retryOriginalMetadata(
-            mediaIds = pageMediaIds,
-            priority = AppleInternalCatalogResolver.RequestPriority.ACTIVE_PAGE,
-            originalResolutionMode = InAppOriginalResolutionMode.ORIGINAL_FIRST,
-        )
+        // Artist shelves can enqueue dozens of song IDs during the first compose pass.
+        // Defer the bulk original-region retry until after the page / player transition settles.
+        runtime.mainHandler.postDelayed({
+            host.markMetadataVisible(pageMediaIds)
+            host.enrichLibraryEntitiesForResolution(pageMediaIds)
+            host.retryOriginalMetadata(
+                mediaIds = pageMediaIds,
+                priority = AppleInternalCatalogResolver.RequestPriority.ACTIVE_PAGE,
+                originalResolutionMode = InAppOriginalResolutionMode.ORIGINAL_FIRST,
+            )
+        }, COLLECTION_PAGE_METADATA_SETTLE_MS)
     }
 
     private fun artistClasses(): Map<String, ResolvedAppleMusicHookClass>? {

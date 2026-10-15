@@ -415,6 +415,20 @@ internal class AppleLibrarySurfaceHooks(
         alias: AppleInternalCatalogResolver.Alias,
     ): Boolean {
         val attributes = host.mediaApiEntityAttributes(entity) ?: return false
+        val currentName = mediaApiAttribute(attributes, AppleMediaApiTextAttribute.NAME)
+        val currentArtist = mediaApiAttribute(attributes, AppleMediaApiTextAttribute.ARTIST_NAME)
+        val currentAlbum = mediaApiAttribute(attributes, AppleMediaApiTextAttribute.ALBUM_NAME)
+        if (
+            mediaApiAliasAlreadyApplied(
+                kind = kind,
+                currentName = currentName,
+                currentArtist = currentArtist,
+                currentAlbum = currentAlbum,
+                alias = alias,
+            )
+        ) {
+            return false
+        }
         val name = when (kind) {
             InAppLibraryEntityKind.ALBUM -> alias.album.ifBlank { alias.title }
             InAppLibraryEntityKind.SONG -> alias.title
@@ -422,23 +436,26 @@ internal class AppleLibrarySurfaceHooks(
         }
         var changed = false
         name.takeIf(String::isNotBlank)?.let { value ->
-            runCatching {
-                setMediaApiAttribute(attributes, AppleMediaApiTextAttribute.NAME, value)
+            if (currentName?.trim() != value.trim()) {
+                runCatching {
+                    setMediaApiAttribute(attributes, AppleMediaApiTextAttribute.NAME, value)
+                }.onSuccess { changed = true }
             }
-                .onSuccess { changed = true }
         }
         alias.artist.takeIf(String::isNotBlank)?.let { value ->
-            runCatching {
-                setMediaApiAttribute(attributes, AppleMediaApiTextAttribute.ARTIST_NAME, value)
+            if (currentArtist?.trim() != value.trim()) {
+                runCatching {
+                    setMediaApiAttribute(attributes, AppleMediaApiTextAttribute.ARTIST_NAME, value)
+                }.onSuccess { changed = true }
             }
-                .onSuccess { changed = true }
         }
         if (kind == InAppLibraryEntityKind.SONG) {
             alias.album.takeIf(String::isNotBlank)?.let { value ->
-                runCatching {
-                    setMediaApiAttribute(attributes, AppleMediaApiTextAttribute.ALBUM_NAME, value)
+                if (currentAlbum?.trim() != value.trim()) {
+                    runCatching {
+                        setMediaApiAttribute(attributes, AppleMediaApiTextAttribute.ALBUM_NAME, value)
+                    }.onSuccess { changed = true }
                 }
-                    .onSuccess { changed = true }
             }
         }
         return changed

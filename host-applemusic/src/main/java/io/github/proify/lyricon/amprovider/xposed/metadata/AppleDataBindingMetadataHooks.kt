@@ -540,8 +540,16 @@ internal class AppleDataBindingMetadataHooks(
     ): DataBindingVariableApplyResult {
         val setVariable = setVariableMethod
             ?: return DataBindingVariableApplyResult(false, false)
+        val root = bindingRootViews[binding]?.get()
+        val rendered = root?.let(::dataBindingRenderedTexts).orEmpty()
+        fun alreadyRendered(value: String?): Boolean {
+            val normalized = value?.trim().orEmpty()
+            return normalized.isNotEmpty() && normalized in rendered
+        }
         fun setVariableValue(variableId: Int?, value: String?): Boolean {
             if (variableId == null || value.isNullOrBlank()) return false
+            // Avoid setVariable + pending-binding churn when the view already shows the alias.
+            if (alreadyRendered(value)) return false
             return runCatching { setVariable.invoke(binding, variableId, value) == true }
                 .getOrDefault(false)
         }
