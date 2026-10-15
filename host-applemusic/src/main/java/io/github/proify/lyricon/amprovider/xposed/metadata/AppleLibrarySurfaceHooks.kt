@@ -374,6 +374,18 @@ internal class AppleLibrarySurfaceHooks(
     fun attributeBindingMediaId(attributes: Any): String? =
         mediaApiAttributeBindings[attributes]?.mediaId
 
+    /** Original (pre-alias) name/artist/album strings captured when entities were registered. */
+    fun originalTexts(mediaId: String): OriginalEntityTexts {
+        val refs = entityRefs[mediaId].orEmpty()
+        fun values(selector: (InAppLibraryEntityRef) -> String?): Set<String> =
+            refs.mapNotNull(selector).map(String::trim).filter(String::isNotEmpty).toSet()
+        return OriginalEntityTexts(
+            names = values { it.originalName },
+            artists = values { it.originalArtist },
+            albums = values { it.originalAlbum },
+        )
+    }
+
     fun liveEntities(mediaId: String): List<Any> =
         entityRefs[mediaId]?.mapNotNull { it.entity.get() }.orEmpty()
 
@@ -1273,3 +1285,9 @@ internal class AppleLibrarySurfaceHooks(
             WeakHashMap<Any, MutableMap<String, AppliedMetadataAlias>>()
         )
 }
+
+internal data class OriginalEntityTexts(
+    val names: Set<String>,
+    val artists: Set<String>,
+    val albums: Set<String>,
+)

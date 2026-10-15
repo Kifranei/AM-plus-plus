@@ -346,6 +346,13 @@ internal class AppleCollectionSurfaceHooks(
                             knownAttributes = attributes,
                         )
                         librarySurfaceHooks.registerController(mediaId, controller)
+                        // The album itself (header title/artist) must be resolved with the
+                        // page, not only once the header view is finally bound.
+                        schedulePageMetadataResolution(
+                            controller = controller,
+                            mediaIds = listOf(mediaId),
+                            pageType = "album",
+                        )
                     }
                 },
                 after = { chain, _ ->
@@ -366,6 +373,15 @@ internal class AppleCollectionSurfaceHooks(
                         ?: host.mediaApiEntityCatalogId(album)
                         ?: return@installScopedHook false
                     activeAlbumHeaderBuildCaptures.push(AlbumHeaderBuildCapture(mediaId))
+                    // Header models copy album.getTitle()/artist at build time; make sure a
+                    // known alias is already on the entity for the very first display.
+                    host.effectiveAlias(mediaId)?.let { alias ->
+                        librarySurfaceHooks.applyAliasToEntity(
+                            album,
+                            InAppLibraryEntityKind.ALBUM,
+                            alias,
+                        )
+                    }
                     true
                 },
                 after = { _, result ->
@@ -868,6 +884,9 @@ internal class AppleCollectionSurfaceHooks(
                 } else {
                     dataBindingHooks.refreshDataBindings(mediaId, alias)
                 }
+                if (root != null) {
+                    applyAlbumHeaderTextFallback(mediaId, alias, root)
+                }
             }
             if (shouldRequest) {
                 host.scheduleMetadataResolution(
@@ -899,6 +918,37 @@ internal class AppleCollectionSurfaceHooks(
             originalResolutionMode = InAppOriginalResolutionMode.ORIGINAL_FIRST,
             work = headerWork,
         )
+    }
+
+    /**
+     * Last-resort guarantee that the header views really change: replace any header text that
+     * still shows the original album title / artist with the alias, now and once more after the
+     * binding settles (the model may re-emit its stale values on the next frame).
+     */
+    private fun applyAlbumHeaderTextFallback(
+        mediaId: String,
+        alias: AppleInternalCatalogResolver.Alias,
+        root: View,
+    ) {
+        val title = alias.album.ifBlank { alias.title }.trim()
+        val artist = alias.artist.trim()
+        fun apply() {
+            val originals = librarySurfaceHooks.originalTexts(mediaId)
+            val albumOriginals = originals.names + originals.albums
+            val artistOriginals = originals.artists
+            descendantTextViews(root).forEach { view ->
+                val text = view.text?.toString()?.trim().orEmpty()
+                if (text.isEmpty()) return@forEach
+                when {
+                    title.isNotEmpty() && text != title && text in albumOriginals ->
+                        view.text = title
+                    artist.isNotEmpty() && text != artist && text in artistOriginals ->
+                        view.text = artist
+                }
+            }
+        }
+        root.post { apply() }
+        root.postDelayed({ apply() }, 400L)
     }
 
     private fun collectionTarget(role: String): AppleMusicHookTarget? =
