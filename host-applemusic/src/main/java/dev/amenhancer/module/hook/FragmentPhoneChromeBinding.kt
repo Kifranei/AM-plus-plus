@@ -47,6 +47,10 @@ internal class FragmentPhoneChromeBinding(
     private var direction: OwnedHostProperty<Int>? = null
     private var translation: OwnedHostProperty<Float>? = null
     private var translationBaseline = 0f
+    private var peekWrites = 0
+    private var collapseOwner: Any? = null
+    private var collapseSheet: View? = null
+    private var collapseTarget = 0
     private fun extra(role: String): View? = names.getJSONObject("presentation").optString(role).takeIf { it.isNotEmpty() }
         ?.let { activity.resources.getIdentifier(it, "id", activity.packageName) }?.takeIf { it != 0 }?.let { contentRoot.findViewById(it) }
 
@@ -67,7 +71,49 @@ internal class FragmentPhoneChromeBinding(
     override fun playerBehavior(preferPlayerRuntime: Boolean): Any? = contract.playerOf.invoke(owner)?.let(contract.playerBehavior::get)
     override fun sheetSnapshot(owner: Any) = NativeSheetSnapshot(contract.behaviorState.getInt(owner), collapsed.getInt(owner), (expanded.invoke(owner) as Number).toInt())
     override fun nativePeekBaseline(owner: Any): Int = if (autoPeek.getBoolean(owner)) -1 else peek.getInt(owner)
-    override fun writePeek(owner: Any, height: Int) { writePeek.invoke(owner, height, false) }
+    override fun writePeek(owner: Any, height: Int) {
+        peekWrites++
+        try { writePeek.invoke(owner, height, false) } finally { peekWrites-- }
+    }
+    fun prepareSheetSettle(owner: Any, sheet: View, targetState: Int) {
+        if (closed || sheet !== find(ChromeResource.PLAYER_SHEET_CONTAINER) || owner !== playerBehavior(false)) return
+        clearCollapseTarget()
+        if (targetState != 4 || callbacks?.replacing != true) return
+        val height = callbacks?.desiredPeek(owner) ?: return
+        // Do this before native P() captures G(4), rather than waiting for the next pre-draw.
+        writePeek(owner, height)
+        // The same-value setter skips recalculation, so refresh the native offset explicitly.
+        contract.refreshCollapsedOffset.invoke(owner)
+        collapseOwner = owner
+        collapseSheet = sheet
+        collapseTarget = collapsed.getInt(owner)
+    }
+    private fun clearCollapseTarget() { collapseOwner = null; collapseSheet = null }
+    override fun reconcileCollapsedSheet(owner: Any): Boolean {
+        if (closed || callbacks?.replacing != true) { clearCollapseTarget(); return false }
+        val state = contract.behaviorState.getInt(owner)
+        if (state != 2) clearCollapseTarget()
+        if (state != 2 && state != 4) return false
+        val sheet = find(ChromeResource.PLAYER_SHEET_CONTAINER) ?: return false
+        if (!sheet.isAttachedToWindow || !sheet.isLaidOut) return false
+        val parent = sheet.parent as? View ?: return false
+        val target = collapsed.getInt(owner)
+        if (target !in 0..parent.height) return false
+        if (state == 2) {
+            // Layout/insets can change collapsedTop after the native animation has started.
+            // Only retarget a known native collapse, and only when its endpoint changed.
+            if (collapseOwner === owner && collapseSheet === sheet && kotlin.math.abs(collapseTarget - target) > 1) {
+                contract.settleSheet.invoke(owner, sheet, 4, false)
+            }
+            return false
+        }
+        if (kotlin.math.abs(sheet.top - target) <= 1) return false
+        // A peek update during settling changes collapsedTop, but not the drag helper's
+        // captured destination. The same-value peek setter is a no-op after it settles.
+        // Let native onLayout apply the latest target; never move a running gesture.
+        if (!sheet.isLayoutRequested) sheet.requestLayout()
+        return true
+    }
     override fun navigation(view: View) = NativeNavigationSnapshot(menu.invoke(view) as Menu, selected.invoke(view) as Int)
     override fun selectNavigation(view: View, id: Int) { select.invoke(view, id) }
     override fun isScrollContainer(view: View) = scrollClasses.getOrPut(view.javaClass) {
@@ -83,7 +129,7 @@ internal class FragmentPhoneChromeBinding(
     }
     fun alpha(view: View, value: Float): Float? = if (closed || writing) null else callbacks?.alpha(view, value)
     fun padding(view: View): Int? = if (closed || writing) null else callbacks?.padding(view)
-    fun peek(owner: Any, value: Int): Int? = if (closed) null else callbacks?.peek(owner, value)
+    fun peek(owner: Any, value: Int): Int? = if (closed || peekWrites > 0) null else callbacks?.peek(owner, value)
     fun replacesBlur(view: View): Boolean = !closed && callbacks?.replacing == true && blurViews.any { it === view }
 
     override fun syncMiniPresentation(miniRoot: View?) {
@@ -119,6 +165,7 @@ internal class FragmentPhoneChromeBinding(
     override fun close() {
         if (closed) return
         closed = true; callbacks = null
+        clearCollapseTarget()
         restorePresentation(); views.clear(); scrollClasses.clear()
     }
 }

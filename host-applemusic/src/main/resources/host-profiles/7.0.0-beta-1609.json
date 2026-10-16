@@ -2422,7 +2422,9 @@
       ],
       "Lcom/google/android/material/bottomsheet/BottomSheetBehavior;": [
         "F()I",
-        "L(IZ)V"
+        "L(IZ)V",
+        "P(Landroid/view/View;IZ)V",
+        "y()V"
       ],
       "Lcom/apple/android/music/playback/player/MediaPlayer;": [
         "getCurrentItem()Lcom/apple/android/music/playback/model/PlayerQueueItem;"
@@ -3375,6 +3377,24 @@
           "name": "F",
           "parameters": [],
           "returns": "int",
+          "static": false
+        },
+        "settleSheet": {
+          "owner": "com.google.android.material.bottomsheet.BottomSheetBehavior",
+          "name": "P",
+          "parameters": [
+            "android.view.View",
+            "int",
+            "boolean"
+          ],
+          "returns": "void",
+          "static": false
+        },
+        "refreshCollapsedOffset": {
+          "owner": "com.google.android.material.bottomsheet.BottomSheetBehavior",
+          "name": "y",
+          "parameters": [],
+          "returns": "void",
           "static": false
         },
         "writePeek": {

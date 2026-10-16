@@ -237,6 +237,9 @@ internal open class PhoneGlassSession(
         InitialGlassSlide.resolve(it.state, sheet.top, it.collapsedTop, it.expandedTop)
     }
 
+    /** Host-specific collapse target/layout coordination, before sampling the mini's anchor. */
+    protected open fun reconcileCollapsedPlayer(): Boolean = false
+
     /** Phone keeps its bottom fade inside the native tabs frame. */
     protected open fun attachNavigationScrim(frame: FrameLayout, scrim: GlassHostView) {
         frame.addView(scrim, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
@@ -433,6 +436,7 @@ internal open class PhoneGlassSession(
                 }
                 navigation?.alpha = if (menuReady) 0f else 1f
                 updateGeometry()
+                if (reconcileCollapsedPlayer()) return false
                 val sourceNeedsLayout = updateUnderlap()
                 val transitionNeedsLayout = updateTransition()
                 val waitingForCapture = glassConsumersVisible && backdrop?.ready == false && canRefreshBackdrop()

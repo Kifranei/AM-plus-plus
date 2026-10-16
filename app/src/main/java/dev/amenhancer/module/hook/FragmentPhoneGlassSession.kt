@@ -29,10 +29,12 @@ internal class FragmentPhoneGlassSession(
         override val replacing get() = activated && !closed
         override fun alpha(view: View, value: Float) = redirectedLayerAlpha(view, value)
         override fun padding(view: View) = redirectedPadding(view)
+        override fun desiredPeek(owner: Any): Int? =
+            if (owner === playerBehavior && activated && !closed) peekHeight() else null
         override fun peek(owner: Any, value: Int): Int? {
             if (owner !== playerBehavior || closed) return null
             observeNativePeek(value)
-            return if (activated) peekHeight() else null
+            return desiredPeek(owner)
         }
     })
     private val subscription = surface.observe { snapshot ->
@@ -51,6 +53,8 @@ internal class FragmentPhoneGlassSession(
     }
     override fun initialSlide(sheet: View, behavior: Any): Float = super.initialSlide(sheet, behavior).also { progress = it }
     override fun nativePeekBaseline(): Int = findPlayerBehavior()?.let(native::nativePeekBaseline) ?: super.nativePeekBaseline()
+    override fun reconcileCollapsedPlayer(): Boolean =
+        playerBehavior?.let(native::reconcileCollapsedSheet) == true
     override val miniVisible: Boolean get() {
         if (progress <= .001f) visibleMini = miniRoot?.isShown == true
         return visibleMini
@@ -89,6 +93,12 @@ internal class FragmentPhoneGlassSession(
     }
     override fun onPreDraw(): Boolean {
         val draw = super.onPreDraw()
+        // Flush after the shared renderer changes the material bounds, even when the
+        // island's own pre-draw listener ran first after a hierarchy reattachment.
+        if (draw && !closed) {
+            try { material?.applyPendingLayout() }
+            catch (error: Throwable) { close(); failure(error); return true }
+        }
         reconcileNativeMaterials()
         if (activated && !reported) { reported = true; ready() }
         return draw
@@ -133,12 +143,15 @@ private class FragmentPhoneMaterialIsland(context: android.content.Context) : Fr
     override fun onAttachedToWindow() { super.onAttachedToWindow(); viewTreeObserver.addOnPreDrawListener(this) }
     override fun onDetachedFromWindow() { close(); super.onDetachedFromWindow() }
     override fun onPreDraw(): Boolean {
+        applyPendingLayout()
+        return true
+    }
+    fun applyPendingLayout() {
         if (pending && width > 0 && height > 0) {
             pending = false
             measure(MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY))
             layout(left, top, right, bottom)
         }
-        return true
     }
     fun close() { viewTreeObserver.takeIf { it.isAlive }?.removeOnPreDrawListener(this) }
 }

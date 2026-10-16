@@ -200,6 +200,16 @@ object FragmentChromeFactory {
                         ?.let { param.args[2] = it.toFloat() }
                 }
             })
+            hook(contract.settleSheet, object : ModernMethodHook() {
+                override fun beforeHookedMethod(param: MethodHookParam) {
+                    val owner = param.thisObject ?: return
+                    val sheet = param.args[0] as View
+                    val target = param.args[1] as Int
+                    runCatching {
+                        bindings.values.forEach { it.phoneChrome?.prepareSheetSettle(owner, sheet, target) }
+                    }.onFailure { observer.onFailure(null, it) }
+                }
+            })
             hook(contract.writePeek, object : ModernMethodHook() {
                 override fun beforeHookedMethod(param: MethodHookParam) {
                     val owner = param.thisObject ?: return

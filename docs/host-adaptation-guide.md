@@ -173,6 +173,12 @@ Java 反编译用于理解调用链，成员声明与完整签名以 DEX/smali �
 
 手机使用原生底导航与 mini 边界；平板使用顶部导航和独立底部 mini。平板 Fragment 玻璃与双栏开关独立。导航模型、三个 getter、选择 callback、重复点击、搜索及抽屉逐项核对，不能只找一个签名相似的方法。
 
+手机玻璃的收回目标和终态布局通过宿主端口协调。`fragmentChrome.members` 必须登记原生启动平滑落位的 `settleSheet(View, int, boolean)` 和重新计算折叠坐标的 `refreshCollapsedOffset()`，并核对当前构建的目标状态参数、BottomSheet 状态、折叠坐标和 peek setter 语义。原生开始向折叠状态落位前，先同步模块占位高度并刷新折叠坐标，再让原生动画读取目标；相同 peek 值也须能刷新过期坐标。模块写入不能被记成新的原生 peek 基线。
+
+收回期间可能因 inset 或布局变化再次改变折叠坐标。宿主适配须记录原生本次落位的 owner、sheet、目标状态和目标坐标；只有仍在该次收回的 settling 且目标坐标确实变化时，才通过原生平滑落位入口更新剩余动画终点。保持正常拖动及展开、隐藏路径，不直接改写 View 的 top/translation，不在目标未变时重复启动动画；原生开始其他目标或进入拖动/稳定状态、会话销毁时清理记录。动画结束后的 `FragmentPhoneChromePort.reconcileCollapsedSheet` 位置检查仅作兜底：原生已折叠但实际位置仍偏离有效目标时，合并布局请求并在完成前阻止该帧绘制。该检查覆盖后续 inset 和布局变化，不能仅依赖 peek 数值变化或进度归零。
+
+原生面板位置校准须先于 mini 折叠锚点采样。材质岛的待处理尺寸和边距应在同一轮绘制前完成测量与布局，不能依赖多个 pre-draw listener 的注册顺序。适配新版本时沿用宿主端口边界，状态及坐标成员从当前 profile 预先解析；旧 Activity 与平板布局分别维护。
+
 mini 启动恢复需同时满足原生登录判断及当前播放对象存在。显示方法可能为实例调用，也可能是静态的 `(owner, boolean)`；按当前描述符及调用标识处理。重试和延迟回调确认 owner / view 仍有效，销毁后停止。
 
 Fragment 设置使用原生 ViewModel 和设置行模型，保留分类、行去重、点击与文件选择结果归属。构造器中的 artwork 类型、callback 和 Unit 不应借用其他构建的类型。

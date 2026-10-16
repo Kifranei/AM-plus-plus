@@ -51,6 +51,8 @@ internal class FragmentChromeContract(loader: ClassLoader, val names: JSONObject
     val autoPeek = members.field("autoPeek")
     val expandedSheetTop = members.method("expandedSheetTop")
     val writePeek = members.method("writePeek")
+    val settleSheet = members.method("settleSheet")
+    val refreshCollapsedOffset = members.method("refreshCollapsedOffset")
     val browser = members.method("browser")
     val currentItem = members.method("currentItem")
     val accountReady = members.method("accountReady")
@@ -88,6 +90,8 @@ internal class FragmentChromeContract(loader: ClassLoader, val names: JSONObject
         shape("navigationMenu", android.view.Menu::class.java); shape("drawerMenu", android.view.Menu::class.java)
         shape("navigationSelected", integer); shape("navigationSelect", void, integer)
         shape("expandedSheetTop", integer); shape("writePeek", void, integer, boolean)
+        shape("settleSheet", void, android.view.View::class.java, integer, boolean)
+        shape("refreshCollapsedOffset", void)
         shape("accountReady", boolean, static = true)
         shape("activityTouch", boolean, android.view.MotionEvent::class.java)
         val staticMini = java.lang.reflect.Modifier.isStatic(miniVisible.modifiers)
@@ -119,7 +123,7 @@ internal object FragmentChromeInventory {
             "selectMenuItem", "miniMargins", "blurDraw", "getActivity", "createView", "viewCreated", "destroyView",
             "getView", "selectedTab", "navigationTabs", "liveDataValue", "navigationMenu", "navigationSelected",
             "navigationSelect", "drawerMenu", "expandedSheetTop", "writePeek", "browser", "currentItem",
-            "accountReady", "miniVisible", "activityTouch"),
+            "accountReady", "miniVisible", "activityTouch", "settleSheet", "refreshCollapsedOffset"),
         fields = setOf("modelKind", "slidePlayer", "playerBehavior", "behaviorState", "playerSlide", "slideProgress",
             "menuListener", "collapsedSheetTop", "peek", "autoPeek"),
     )
