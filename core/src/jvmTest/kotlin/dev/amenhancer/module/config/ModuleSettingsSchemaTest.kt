@@ -75,6 +75,7 @@ class ModuleSettingsSchemaTest {
                 "cjk_karaoke_animation_enabled" to true,
                 "navigation_compensation_enabled" to false,
                 "force_cellular_data_entry_enabled" to false,
+                "hyperos_media_actions_enabled" to true,
                 "lyric_blur_radius_offset_px" to 6,
                 "apple_music_dpi_override_dpi" to 0,
                 "title_correction_enabled" to false,
@@ -114,6 +115,7 @@ class ModuleSettingsSchemaTest {
                 "cjk_karaoke_animation_enabled" to true,
                 "navigation_compensation_enabled" to false,
                 "force_cellular_data_entry_enabled" to false,
+                "hyperos_media_actions_enabled" to true,
                 "lyric_blur_radius_offset_px" to 0,
                 "apple_music_dpi_override_dpi" to 0,
                 "title_correction_enabled" to false,
@@ -535,5 +537,12 @@ class ModuleSettingsSchemaTest {
         assertFalse(upgraded!!.containsKey("modify_locale"))
         assertFalse(upgraded.containsKey("modify_locale_target_tag"))
         assertEquals("original_hyper", upgraded["title_correction_mode"])
+    }
+
+    @org.junit.Test
+    fun `hyperos media actions default on and round trip`() {
+        org.junit.Assert.assertTrue(ModuleSettingsSchema.decode(emptyMap<String, Any>()).hyperOsMediaActionsEnabled)
+        val off = ModuleSettingsSchema.encode(dev.amenhancer.module.model.ModuleSettings(hyperOsMediaActionsEnabled = false))
+        org.junit.Assert.assertFalse(ModuleSettingsSchema.decode(off).hyperOsMediaActionsEnabled)
     }
 }

@@ -20,4 +20,5 @@ object ModuleConstants {
     const val FEATURE_APPLE_MUSIC_DPI = "apple_music_dpi"
     const val FEATURE_CELLULAR_DATA_ENTRY = "cellular_data_entry"
     const val FEATURE_PLAYER_RECOVERY = "player_recovery"
+    const val FEATURE_HYPEROS_MEDIA_ACTIONS = "hyperos_media_actions"
 }

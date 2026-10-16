@@ -142,6 +142,8 @@ enum class ModuleText(internal val english: String, internal val chinese: String
     TABLET_DUAL_PANE_SUMMARY("Enable two panes on tablets in landscape", "平板横屏启用双栏"),
     CELLULAR_SETTINGS("Show cellular data settings", "强制显示蜂窝数据入口"),
     CELLULAR_SETTINGS_SUMMARY("Restore native cellular data settings · Restart to apply", "恢复原生蜂窝数据设置 · 重开应用后显示"),
+    HYPEROS_MEDIA_ACTIONS("Restore media notification buttons (HyperOS)", "补回媒体通知按钮（HyperOS）"),
+    HYPEROS_MEDIA_ACTIONS_SUMMARY("Restore favorite / shuffle / repeat buttons hidden by Xiaomi · Enable com.android.systemui in the LSPosed scope · Restart Apple Music to apply", "补回被小米隐藏的收藏 / 随机 / 循环按钮 · 需在 LSPosed 作用域勾选系统界面（com.android.systemui） · 重开 Apple Music 后生效"),
     TABLET_BOTTOM_BAR_FIX("Tablet bottom bar compensation", "平板底栏补偿"),
     TABLET_BOTTOM_BAR_FIX_SUMMARY("Enable if the bottom bar is displayed incorrectly", "如果底栏显示异常开启该选项"),
     LIQUID_GLASS_NAVIGATION("Liquid Glass bottom bar", "液态玻璃底栏"),

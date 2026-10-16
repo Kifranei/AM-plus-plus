@@ -57,6 +57,12 @@ class HookEntry : XposedModule() {
             ModernXposedRuntime.log("framework API $apiVersion is below the embedded API 102 minimum")
             return
         }
+        if (param.packageName == SystemUiMediaActionsHook.SYSTEM_UI) {
+            if (!param.isFirstPackage) return
+            runCatching { SystemUiMediaActionsHook.install(param.classLoader) }
+                .onFailure { ModernXposedRuntime.log("SystemUI media actions hook failed open", it) }
+            return
+        }
         if (!bootstrap.prepare(param.packageName, processName, param.isFirstPackage)) return
         ModernXposedRuntime.attach(this)
         val targetClassLoader = param.classLoader

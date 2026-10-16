@@ -40,6 +40,7 @@ object ModuleSettingsSchema {
             default = false,
         ),
         forceCellularDataEntryEnabled = values.boolean(KEY_FORCE_CELLULAR_DATA_ENTRY, default = false),
+        hyperOsMediaActionsEnabled = values.boolean(KEY_HYPEROS_MEDIA_ACTIONS, default = true),
         lyricBlurRadiusOffsetPx = values.number(KEY_LYRIC_BLUR_RADIUS_OFFSET)
             ?.coerceIn(
                 ModuleSettings.MIN_LYRIC_BLUR_RADIUS_OFFSET_PX,
@@ -92,6 +93,7 @@ object ModuleSettingsSchema {
             KEY_CJK_KARAOKE_ANIMATION_ENABLED to settings.cjkKaraokeAnimationEnabled,
             KEY_NAVIGATION_COMPENSATION to settings.navigationCompensationEnabled,
             KEY_FORCE_CELLULAR_DATA_ENTRY to settings.forceCellularDataEntryEnabled,
+            KEY_HYPEROS_MEDIA_ACTIONS to settings.hyperOsMediaActionsEnabled,
             KEY_LYRIC_BLUR_RADIUS_OFFSET to settings.lyricBlurRadiusOffsetPx.coerceIn(
                 ModuleSettings.MIN_LYRIC_BLUR_RADIUS_OFFSET_PX,
                 ModuleSettings.MAX_LYRIC_BLUR_RADIUS_OFFSET_PX,
@@ -251,6 +253,7 @@ object ModuleSettingsSchema {
         KEY_CJK_KARAOKE_ANIMATION_ENABLED,
         KEY_NAVIGATION_COMPENSATION,
         KEY_FORCE_CELLULAR_DATA_ENTRY,
+        KEY_HYPEROS_MEDIA_ACTIONS,
         KEY_LYRIC_BLUR_RADIUS_OFFSET,
         KEY_APPLE_MUSIC_DPI_OVERRIDE_DPI,
         KEY_TITLE_CORRECTION_ENABLED,
@@ -284,6 +287,7 @@ object ModuleSettingsSchema {
     private const val KEY_CJK_KARAOKE_ANIMATION_ENABLED = "cjk_karaoke_animation_enabled"
     private const val KEY_NAVIGATION_COMPENSATION = "navigation_compensation_enabled"
     private const val KEY_FORCE_CELLULAR_DATA_ENTRY = "force_cellular_data_entry_enabled"
+    private const val KEY_HYPEROS_MEDIA_ACTIONS = "hyperos_media_actions_enabled"
     private const val KEY_LYRIC_BLUR_RADIUS_OFFSET = "lyric_blur_radius_offset_px"
     private const val KEY_APPLE_MUSIC_DPI_OVERRIDE_DPI = "apple_music_dpi_override_dpi"
     private const val KEY_TITLE_CORRECTION_ENABLED = "title_correction_enabled"

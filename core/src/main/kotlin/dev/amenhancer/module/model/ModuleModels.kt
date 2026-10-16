@@ -18,6 +18,8 @@ data class ModuleSettings(
     val navigationCompensationEnabled: Boolean = false,
     /** Restores native Data settings and the app's cellular availability predicate. */
     val forceCellularDataEntryEnabled: Boolean = false,
+    /** Restores favorite/shuffle/repeat media-notification actions on Xiaomi HyperOS. */
+    val hyperOsMediaActionsEnabled: Boolean = true,
     val lyricBlurRadiusOffsetPx: Int = 0,
     /** Fixed logical density for Apple Music; 0 follows the system density. */
     val appleMusicDpiOverrideDpi: Int = FOLLOW_SYSTEM_APPLE_MUSIC_DPI,

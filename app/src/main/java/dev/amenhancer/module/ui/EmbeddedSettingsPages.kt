@@ -1,5 +1,6 @@
 package dev.amenhancer.module.ui
 
+import dev.amenhancer.module.hook.HyperOsMediaActionsFeature
 import dev.amenhancer.module.i18n.ModuleText
 
 import android.app.Activity
@@ -344,6 +345,20 @@ internal fun EmbeddedSettingsHost.renderEmbeddedMainPage(
                 onCellularDataEntryChanged(it)
                 pageRefresh?.invoke()
             })
+            if (HyperOsMediaActionsFeature.isXiaomiFamily()) {
+                addView(embeddedDivider(activity))
+                addView(embeddedSettingRow(
+                    activity,
+                    localizedText(ModuleText.HYPEROS_MEDIA_ACTIONS),
+                    localizedText(ModuleText.HYPEROS_MEDIA_ACTIONS_SUMMARY),
+                    settings.hyperOsMediaActionsEnabled,
+                    iconTint = EmbeddedSettingsPalette.Light.primary,
+                    iconDrawable = EmbeddedGlyphDrawable(
+                        EmbeddedGlyphKind.Music,
+                        EmbeddedSettingsPalette.Light.primary,
+                    ),
+                ) { onSettingsChanged(settings.copy(hyperOsMediaActionsEnabled = it)) })
+            }
             // The compensation toggle only matters for the native tablet bar:
             // liquid glass owns the bottom geometry while it is on, so hide the
             // row instead of showing a switch that silently does nothing.

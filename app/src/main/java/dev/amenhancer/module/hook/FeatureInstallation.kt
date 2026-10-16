@@ -255,6 +255,7 @@ private fun productionFeatureInstallationModule(
             ),
             FeatureInstallationPlan(feature = EditorialVideoFeature()),
             FeatureInstallationPlan(feature = CellularDataEntryFeature()),
+            FeatureInstallationPlan(feature = HyperOsMediaActionsFeature()),
             FeatureInstallationPlan(
                 feature = PhoneLiquidGlassFeature(),
                 registerResources = PhoneLiquidGlassResourceHook::install,
