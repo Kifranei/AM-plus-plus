@@ -41,9 +41,11 @@ class HookEntry : XposedModule() {
     override fun onModuleLoaded(param: ModuleLoadedParam) {
         ModernXposedRuntime.attach(this)
         val moduleInfo = runCatching { getModuleApplicationInfo() }.getOrNull()
-        dev.amenhancer.host.applemusic.AppleMusicHostProfiles.initializeModulePaths(
-            listOfNotNull(moduleInfo?.sourceDir, moduleInfo?.publicSourceDir) + moduleInfo?.splitSourceDirs.orEmpty(),
-        )
+        runCatching {
+            dev.amenhancer.host.applemusic.AppleMusicHostProfiles.initializeModulePaths(
+                listOfNotNull(moduleInfo?.sourceDir, moduleInfo?.publicSourceDir) + moduleInfo?.splitSourceDirs.orEmpty(),
+            )
+        }.onFailure { ModernXposedRuntime.log("module path init failed in ${param.processName}", it) }
         processName = param.processName
         log(
             Log.INFO,
@@ -58,9 +60,11 @@ class HookEntry : XposedModule() {
             return
         }
         if (param.packageName == SystemUiMediaActionsHook.SYSTEM_UI) {
-            if (!param.isFirstPackage) return
+            HyperOsActionsLog.i(
+                "SystemUI onPackageReady process=$processName first=${param.isFirstPackage}",
+            )
             runCatching { SystemUiMediaActionsHook.install(param.classLoader) }
-                .onFailure { ModernXposedRuntime.log("SystemUI media actions hook failed open", it) }
+                .onFailure { HyperOsActionsLog.e("SystemUI media actions hook failed open", it) }
             return
         }
         if (!bootstrap.prepare(param.packageName, processName, param.isFirstPackage)) return
@@ -160,6 +164,8 @@ class HookEntry : XposedModule() {
                         if (!initializationStarted.compareAndSet(false, true)) return
                         val session = embeddedSession ?: return
                         val currentSong = CurrentSongIdentityCache()
+                        HyperOsActionsLog.bindFile(application.filesDir)
+                        HyperOsActionsLog.i("application ready; installing embedded features")
                         runCatching {
                             FeatureInstallation.installEmbedded(
                                 config,

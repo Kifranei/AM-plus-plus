@@ -21,6 +21,9 @@ internal object SystemUiMediaActionsHook {
     private val MANAGER_CLASSES = listOf(
         "com.miui.systemui.notification.NotificationSettingsManager",
         "com.android.systemui.statusbar.notification.NotificationSettingsManager",
+        "com.miui.systemui.statusbar.notification.NotificationSettingsManager",
+        "com.android.systemui.statusbar.notification.row.NotificationSettingsManager",
+        "com.miui.systemui.notification.MiuiNotificationSettingsManager",
     )
 
     private val ACTION_PIPELINE_HOOKS = listOf(
@@ -38,6 +41,12 @@ internal object SystemUiMediaActionsHook {
 
     fun install(classLoader: ClassLoader) {
         if (!installed.compareAndSet(false, true)) return
+        HyperOsActionsLog.i(
+            "SystemUI install start; managers present=" +
+                MANAGER_CLASSES.filter { findClass(it, classLoader) != null } +
+                " mediaPipelines present=" +
+                ACTION_PIPELINE_HOOKS.map { it.first }.distinct().filter { findClass(it, classLoader) != null },
+        )
         var hooked = 0
         for ((className, methodName) in ACTION_PIPELINE_HOOKS) {
             val cls = findClass(className, classLoader) ?: continue
@@ -50,12 +59,12 @@ internal object SystemUiMediaActionsHook {
                         }
                     })
                     hooked++
-                }.onFailure { ModernXposedRuntime.log("SystemUI hook $className#$methodName failed", it) }
+                }.onFailure { HyperOsActionsLog.e("SystemUI hook $className#$methodName failed", it) }
             }
         }
         clearHiddenLists(classLoader)
         hooked += hookManagerCheckMethods(classLoader)
-        ModernXposedRuntime.log("SystemUiMediaActionsHook installed pipelineHooks=$hooked")
+        HyperOsActionsLog.i("SystemUI install done pipelineHooks=$hooked managerResolved=${resolveManager(classLoader) != null}")
     }
 
     private fun hookManagerCheckMethods(classLoader: ClassLoader): Int {
@@ -81,23 +90,42 @@ internal object SystemUiMediaActionsHook {
         return n
     }
 
+    @Volatile private var clearLogs = 0
+
     fun clearHiddenLists(classLoader: ClassLoader) {
-        val manager = resolveManager(classLoader) ?: return
-        for (fieldName in HIDDEN_LIST_FIELDS) {
-            runCatching {
-                var c: Class<*>? = manager.javaClass
-                var field: Field? = null
-                while (c != null && field == null) {
-                    field = runCatching { c!!.getDeclaredField(fieldName) }.getOrNull()
-                    c = c.superclass
-                }
-                val f = field ?: return@runCatching
-                f.isAccessible = true
-                when (val cur = f.get(manager)) {
-                    is MutableList<*> -> cur.clear()
-                    else -> f.set(manager, ArrayList<Any>())
-                }
+        val manager = resolveManager(classLoader)
+        if (manager == null) {
+            if (clearLogs++ < 5) HyperOsActionsLog.i("clearHiddenLists: NotificationSettingsManager instance not found")
+            return
+        }
+        var cleared = 0
+        var c: Class<*>? = manager.javaClass
+        while (c != null && c != Any::class.java) {
+            for (f in c.declaredFields) {
+                val n = f.name
+                val hit = n in HIDDEN_LIST_FIELDS ||
+                    (n.contains("hidden", true) && n.contains("action", true))
+                if (!hit || Modifier.isStatic(f.modifiers) && f.type.isPrimitive) continue
+                runCatching {
+                    f.isAccessible = true
+                    val before = (f.get(manager) as? Collection<*>)?.size
+                    when (val cur = f.get(manager)) {
+                        is MutableCollection<*> -> cur.clear()
+                        else -> if (Collection::class.java.isAssignableFrom(f.type) || f.type == Any::class.java) {
+                            f.set(manager, ArrayList<Any>())
+                        }
+                    }
+                    cleared++
+                    if (clearLogs++ < 8) HyperOsActionsLog.i("cleared ${c!!.name}#$n (was size=$before)")
+                }.onFailure { if (clearLogs++ < 8) HyperOsActionsLog.e("clear ${f.name} failed", it) }
             }
+            c = c.superclass
+        }
+        if (cleared == 0 && clearLogs++ < 8) {
+            HyperOsActionsLog.i(
+                "manager ${manager.javaClass.name} has no hidden-action field; fields=" +
+                    manager.javaClass.declaredFields.map { it.name }.take(60),
+            )
         }
     }
 

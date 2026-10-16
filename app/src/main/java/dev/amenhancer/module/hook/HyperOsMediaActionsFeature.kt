@@ -25,19 +25,43 @@ internal class HyperOsMediaActionsFeature : FeatureHook {
     override val key = ModuleConstants.FEATURE_HYPEROS_MEDIA_ACTIONS
 
     override fun install(context: HookContext): FeatureInstallResult {
-        if (!isXiaomiFamily()) {
+        val enabled = runCatching { context.config.settings().hyperOsMediaActionsEnabled }.getOrDefault(true)
+        HyperOsActionsLog.i(
+            "feature install: manufacturer=${Build.MANUFACTURER} brand=${Build.BRAND} " +
+                "miui/hyperos=${isHyperOsProperty()} sdk=${Build.VERSION.SDK_INT} toggle=$enabled",
+        )
+        if (!isXiaomiFamily() && !isHyperOsProperty()) {
+            HyperOsActionsLog.i("not a Xiaomi/HyperOS device; hook NOT installed")
             return FeatureInstallResult.unsupported("Not a Xiaomi/HyperOS device; media actions left untouched")
         }
         val method = MediaSession::class.java.getDeclaredMethod("setPlaybackState", PlaybackState::class.java)
+        var calls = 0L
         ModernXposedRuntime.hookMethod(method, object : ModernMethodHook() {
             override fun beforeHookedMethod(param: MethodHookParam) {
-                if (!context.config.settings().hyperOsMediaActionsEnabled) return
-                val state = param.args.getOrNull(0) as? PlaybackState ?: return
-                runCatching { param.args[0] = enhance(state) }
-                    .onFailure { ModernXposedRuntime.log("HyperOS media actions enhance failed", it) }
+                val n = ++calls
+                val on = runCatching { context.config.settings().hyperOsMediaActionsEnabled }.getOrDefault(true)
+                val state = param.args.getOrNull(0) as? PlaybackState
+                if (n <= 3 || n % 50 == 0L) {
+                    HyperOsActionsLog.i(
+                        "setPlaybackState call#$n toggle=$on state=${state?.state} " +
+                            "ids=${state?.customActions.orEmpty().map { it.action }}",
+                    )
+                }
+                if (!on || state == null) return
+                runCatching {
+                    val out = enhance(state)
+                    param.args[0] = out
+                    if (n <= 3 || n % 50 == 0L) {
+                        HyperOsActionsLog.i(
+                            "rewrote #$n -> ids=${out.customActions.orEmpty().map { it.action }} " +
+                                "actions=0x${java.lang.Long.toHexString(out.actions)}",
+                        )
+                    }
+                }.onFailure { HyperOsActionsLog.e("enhance failed", it) }
             }
         })
-        return if (context.config.settings().hyperOsMediaActionsEnabled) {
+        HyperOsActionsLog.i("hooked MediaSession.setPlaybackState")
+        return if (enabled) {
             FeatureInstallResult.active("MediaSession.setPlaybackState CustomAction rewrite installed")
         } else {
             FeatureInstallResult.disabled("Hook installed; toggle is off")
@@ -63,6 +87,14 @@ internal class HyperOsMediaActionsFeature : FeatureHook {
         ): Boolean = listOfNotNull(manufacturer, brand).any {
             it.equals("xiaomi", true) || it.equals("redmi", true) || it.equals("poco", true)
         }
+
+        fun isHyperOsProperty(): Boolean = runCatching {
+            val sp = Class.forName("android.os.SystemProperties")
+            val get = sp.getMethod("get", String::class.java, String::class.java)
+            listOf("ro.mi.os.version.name", "ro.miui.ui.version.name").any {
+                (get.invoke(null, it, "") as? String).orEmpty().isNotBlank()
+            }
+        }.getOrDefault(false)
 
         fun labelFor(action: String?): String = when (action) {
             ACTION_FAVORITE -> "收藏"
