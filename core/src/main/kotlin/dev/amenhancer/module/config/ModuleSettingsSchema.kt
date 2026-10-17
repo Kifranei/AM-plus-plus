@@ -35,6 +35,10 @@ object ModuleSettingsSchema {
             KEY_PHONE_LIQUID_GLASS_COLLAPSE,
             default = true,
         ),
+        phoneLiquidGlassPopupMenuEnabled = values.boolean(
+            KEY_PHONE_LIQUID_GLASS_POPUP_MENU,
+            default = true,
+        ),
         phoneLiquidGlassTabletCollapseEnabled = values.boolean(
             KEY_PHONE_LIQUID_GLASS_TABLET_COLLAPSE,
             default = false,
@@ -121,6 +125,7 @@ object ModuleSettingsSchema {
                     settings.phoneLiquidGlassPanelBlurDp,
                 ),
             KEY_PHONE_LIQUID_GLASS_COLLAPSE to settings.phoneLiquidGlassCollapseEnabled,
+            KEY_PHONE_LIQUID_GLASS_POPUP_MENU to settings.phoneLiquidGlassPopupMenuEnabled,
             KEY_PHONE_LIQUID_GLASS_TABLET_COLLAPSE to settings.phoneLiquidGlassTabletCollapseEnabled,
             KEY_PHONE_LIQUID_GLASS_COLLAPSE_REBOUND_PERCENT to
                 ModuleSettings.normalizePhoneLiquidGlassCollapseReboundPercent(
@@ -300,6 +305,7 @@ object ModuleSettingsSchema {
         KEY_PHONE_LIQUID_GLASS_BOTTOM_GAP_DP,
         KEY_PHONE_LIQUID_GLASS_PANEL_BLUR_DP,
         KEY_PHONE_LIQUID_GLASS_COLLAPSE,
+        KEY_PHONE_LIQUID_GLASS_POPUP_MENU,
         KEY_PHONE_LIQUID_GLASS_TABLET_COLLAPSE,
         KEY_PHONE_LIQUID_GLASS_COLLAPSE_REBOUND_PERCENT,
         KEY_PHONE_LIQUID_GLASS_EXPAND_REBOUND_PERCENT,
@@ -341,6 +347,7 @@ object ModuleSettingsSchema {
     private const val KEY_PHONE_LIQUID_GLASS_BOTTOM_GAP_DP = "phone_liquid_glass_bottom_gap_dp"
     private const val KEY_PHONE_LIQUID_GLASS_PANEL_BLUR_DP = "phone_liquid_glass_panel_blur_dp"
     private const val KEY_PHONE_LIQUID_GLASS_COLLAPSE = "phone_liquid_glass_collapse_enabled"
+    private const val KEY_PHONE_LIQUID_GLASS_POPUP_MENU = "phone_liquid_glass_popup_menu_enabled"
     private const val KEY_PHONE_LIQUID_GLASS_TABLET_COLLAPSE = "phone_liquid_glass_tablet_collapse_enabled"
     private const val KEY_PHONE_LIQUID_GLASS_COLLAPSE_REBOUND_PERCENT =
         "phone_liquid_glass_collapse_rebound_percent"

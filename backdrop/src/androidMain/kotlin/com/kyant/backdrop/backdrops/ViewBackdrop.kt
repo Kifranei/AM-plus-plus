@@ -42,6 +42,7 @@ class ViewBackdrop(
     private val matrixValues = FloatArray(9)
     private val location = IntArray(2)
     private val rootOrigin = FloatArray(2)
+    private val windowDelta = FloatArray(2)
     private var generation by mutableIntStateOf(0)
     private var observer: ViewTreeObserver? = null
     private var recording = false
@@ -54,10 +55,18 @@ class ViewBackdrop(
 
     override val isCoordinatesDependent = true
 
+    /**
+     * For a consumer in ANOTHER window (e.g. a popup): writes (dx, dy) = source window origin minus
+     * consumer window origin, in screen pixels. Null for same-window consumers. Set before [start].
+     */
+    var consumerWindowDelta: ((FloatArray) -> Unit)? = null
+
     fun start() {
         check(!closed)
         if (observer != null) return
         observer = source.viewTreeObserver.also { it.addOnPreDrawListener(this) }
+        // A static source would never run pre-draw again; force the first recording.
+        if (consumerWindowDelta != null) source.invalidate()
     }
 
     /** Suspend source recording while no backdrop consumer is visible. */
@@ -165,6 +174,11 @@ class ViewBackdrop(
             val save = canvas.save()
             try {
                 canvas.concat(windowToTarget)
+                consumerWindowDelta?.let { delta ->
+                    windowDelta.fill(0f)
+                    delta(windowDelta)
+                    if (windowDelta[0].isFinite() && windowDelta[1].isFinite()) canvas.translate(windowDelta[0], windowDelta[1])
+                }
                 canvas.concat(sourceToWindow)
                 canvas.drawRenderNode(node)
             } finally { canvas.restoreToCount(save) }

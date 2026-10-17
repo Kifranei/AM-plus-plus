@@ -154,6 +154,8 @@ enum class ModuleText(internal val english: String, internal val chinese: String
     BOTTOM_BAR_BLUR_SUMMARY("Applies to the bottom bar and mini player", "作用于底栏与迷你播放器"),
     BOTTOM_BAR_COLLAPSE("Collapse on scroll", "随滚动收缩"),
     BOTTOM_BAR_COLLAPSE_SUMMARY("Shrinks the bar while scrolling down; search detaches beside the mini player", "下滑页面时收起底栏，搜索键分离到迷你播放器右侧"),
+    GLASS_POPUP_MENU("Glass dropdown menus", "下拉菜单玻璃效果"),
+    GLASS_POPUP_MENU_SUMMARY("Library ⋮ and other floating menus use the same liquid glass as the bottom bar · Takes effect next time a menu opens", "资料库「⋮」等浮层菜单使用与底栏相同的液态玻璃，下次打开菜单生效"),
     BOTTOM_BAR_ANIMATION_SETTINGS("Bottom bar animation", "底栏动画设置"),
     BOTTOM_BAR_ANIMATION_SETTINGS_SUMMARY("Adjust collapse, expand and mini-player rebound", "调整收缩、展开与迷你播放器的回弹效果"),
     BOTTOM_BAR_TABLET_COLLAPSE("Tablet collapse on scroll", "平板端随滚动收缩"),

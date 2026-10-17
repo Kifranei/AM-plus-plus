@@ -54,6 +54,12 @@ data class ModuleSettings(
      * before springing back, in dp. 0 disables the dip. Read live.
      */
     val phoneLiquidGlassMiniSinkBounceDp: Int = EnhancementDefaults.GLASS_MINI_SINK_BOUNCE_DP,
+    /**
+     * Draws the same liquid glass as the bottom bar behind Apple Music's floating dropdown menus
+     * (e.g. the Library "⋮" menu) instead of the host's Gaussian blur. Gated by
+     * [phoneLiquidGlassEnabled] and the host profile's `glassPopupMenu` capability. Read live.
+     */
+    val phoneLiquidGlassPopupMenuEnabled: Boolean = true,
     val futureBlurEnabled: Boolean = true,
     /** Enables the native rush-gradient adaptation for CJK karaoke lyrics. */
     val cjkKaraokeAnimationEnabled: Boolean = true,

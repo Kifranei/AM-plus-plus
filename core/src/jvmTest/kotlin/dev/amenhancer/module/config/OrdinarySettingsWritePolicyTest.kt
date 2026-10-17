@@ -108,6 +108,7 @@ class OrdinarySettingsWritePolicyTest {
                 "phone_liquid_glass_bottom_gap_dp" to 16,
                 "phone_liquid_glass_panel_blur_dp" to 4,
                 "phone_liquid_glass_collapse_enabled" to true,
+                "phone_liquid_glass_popup_menu_enabled" to true,
                 "phone_liquid_glass_tablet_collapse_enabled" to false,
                 "phone_liquid_glass_collapse_rebound_percent" to 35,
                 "phone_liquid_glass_expand_rebound_percent" to 100,

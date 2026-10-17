@@ -79,6 +79,9 @@ internal object FragmentGlassRuntime {
                 }
             })
             GlassDiagLog.i("fragment glass hooks installed")
+            // Independent of the chrome sessions: its own hooks, own failure domain, live toggle.
+            runCatching { FragmentGlassPopupMenu.install(activity.classLoader, build, config) }
+                .onFailure { GlassDiagLog.e("popup-menu glass install threw; menus stay native", it) }
             if (!registered) {
                 registered = true
                 activity.application.registerActivityLifecycleCallbacks(object : Application.ActivityLifecycleCallbacks {

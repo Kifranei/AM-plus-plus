@@ -443,6 +443,18 @@ internal fun EmbeddedSettingsHost.renderEmbeddedMainPage(
                     rangeMax = ModuleSettings.MAX_PHONE_LIQUID_GLASS_PANEL_BLUR_DP,
                     suffix = localizedText(ModuleText.BOTTOM_BAR_BLUR_SUMMARY),
                 ) { onSettingsChanged(currentSettings().copy(phoneLiquidGlassPanelBlurDp = it)) })
+                addView(embeddedDivider(activity))
+                addView(embeddedSettingRow(
+                    activity,
+                    localizedText(ModuleText.GLASS_POPUP_MENU),
+                    localizedText(ModuleText.GLASS_POPUP_MENU_SUMMARY),
+                    settings.phoneLiquidGlassPopupMenuEnabled,
+                    iconTint = EmbeddedSettingsPalette.Light.accent,
+                    iconDrawable = EmbeddedGlyphDrawable(
+                        EmbeddedGlyphKind.Glass,
+                        EmbeddedSettingsPalette.Light.accent,
+                    ),
+                ) { onSettingsChanged(currentSettings().copy(phoneLiquidGlassPopupMenuEnabled = it)) })
                 if (collapseAvailable) {
                     addView(embeddedDivider(activity))
                     addView(embeddedSettingRow(

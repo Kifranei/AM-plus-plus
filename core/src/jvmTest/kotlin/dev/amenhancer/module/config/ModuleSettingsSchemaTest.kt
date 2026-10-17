@@ -102,6 +102,7 @@ class ModuleSettingsSchemaTest {
                 "phone_liquid_glass_bottom_gap_dp" to 16,
                 "phone_liquid_glass_panel_blur_dp" to 4,
                 "phone_liquid_glass_collapse_enabled" to true,
+                "phone_liquid_glass_popup_menu_enabled" to true,
                 "phone_liquid_glass_tablet_collapse_enabled" to false,
                 "phone_liquid_glass_collapse_rebound_percent" to 35,
                 "phone_liquid_glass_expand_rebound_percent" to 100,
@@ -149,6 +150,7 @@ class ModuleSettingsSchemaTest {
                 "phone_liquid_glass_bottom_gap_dp" to 16,
                 "phone_liquid_glass_panel_blur_dp" to 4,
                 "phone_liquid_glass_collapse_enabled" to true,
+                "phone_liquid_glass_popup_menu_enabled" to true,
                 "phone_liquid_glass_tablet_collapse_enabled" to false,
                 "phone_liquid_glass_collapse_rebound_percent" to 35,
                 "phone_liquid_glass_expand_rebound_percent" to 100,
@@ -257,6 +259,14 @@ class ModuleSettingsSchemaTest {
                 mapOf("lyric_blur_radius_offset_px" to -99),
             ).lyricBlurRadiusOffsetPx,
         )
+    }
+
+    @Test
+    fun `glass popup menu toggle defaults on and round trips`() {
+        assertEquals(true, ModuleSettingsSchema.decode(emptyMap<String, Any?>()).phoneLiquidGlassPopupMenuEnabled)
+        val off = ModuleSettingsSchema.encodeOrdinarySettings(ModuleSettings(phoneLiquidGlassPopupMenuEnabled = false))
+        assertEquals(false, off["phone_liquid_glass_popup_menu_enabled"])
+        assertEquals(false, ModuleSettingsSchema.decode(off).phoneLiquidGlassPopupMenuEnabled)
     }
 
     @Test

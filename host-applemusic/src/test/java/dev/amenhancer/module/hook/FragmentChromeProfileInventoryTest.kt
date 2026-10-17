@@ -26,4 +26,18 @@ class FragmentChromeProfileInventoryTest {
             assertTrue(profile.id, methods.has("settleSheet") && methods.has("refreshCollapsedOffset"))
         }
     }
+
+    @Test fun popupMenuCapabilityRequiresItsContractAndBlurClass() {
+        val checked = AppleMusicHostProfiles.all.filter { it.capability("glassPopupMenu") }
+        assertTrue("1609 and 1611 must declare glassPopupMenu",
+            checked.map { it.versionCode }.containsAll(listOf(1609, 1611)))
+        checked.forEach { profile ->
+            assertTrue("${profile.id}: needs glass + fragmentChrome", profile.capability("glass") && profile.document.has("fragmentChrome"))
+            val spec = profile.document.getJSONObject("glassPopupMenu")
+            listOf("blurViewId", "backdropSource", "cornerRadiusDimen").forEach {
+                assertTrue("${profile.id}: glassPopupMenu.$it missing", spec.optString(it).isNotEmpty())
+            }
+            assertTrue(profile.id, profile.document.getJSONObject("fragmentChrome").optString("blurClass").isNotEmpty())
+        }
+    }
 }

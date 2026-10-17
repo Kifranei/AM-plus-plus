@@ -105,9 +105,17 @@
       }
     }
   },
+  "glassPopupMenu": {
+    "contractVersion": 1,
+    "blurViewId": "option_button_blur",
+    "backdropSource": "blur_target",
+    "cornerRadiusDimen": "corner_radius_xxl",
+    "evidence": "Mapped from 1611 by name, not separately traced: 1609 ships the same eightbitlab BlurView (draw/onAttachedToWindow/onDetachedFromWindow, one interface-typed controller field), layout option_button_blur and Aa.* DropdownMenu composables (Aa/C, Aa/D, Aa/I reference DropdownMenu/option_button_blur). Static only."
+  },
   "capabilities": {
     "glass": true,
     "glassScrollCollapse": true,
+    "glassPopupMenu": true,
     "cellular": true,
     "staticCollapsedIntercept": false,
     "playerRecovery": true,

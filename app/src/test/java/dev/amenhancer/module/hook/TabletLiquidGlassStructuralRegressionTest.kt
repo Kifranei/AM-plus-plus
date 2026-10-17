@@ -159,6 +159,7 @@ class TabletLiquidGlassStructuralRegressionTest {
                 "phone_liquid_glass_bottom_gap_dp",
                 "phone_liquid_glass_panel_blur_dp",
                 "phone_liquid_glass_collapse_enabled",
+                "phone_liquid_glass_popup_menu_enabled",
                 "phone_liquid_glass_tablet_collapse_enabled",
                 "phone_liquid_glass_collapse_rebound_percent",
                 "phone_liquid_glass_expand_rebound_percent",

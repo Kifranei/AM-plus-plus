@@ -105,9 +105,17 @@
       }
     }
   },
+  "glassPopupMenu": {
+    "contractVersion": 1,
+    "blurViewId": "option_button_blur",
+    "backdropSource": "blur_target",
+    "cornerRadiusDimen": "corner_radius_xxl",
+    "evidence": "Static (jadx/dexdump of 1611 base.apk), not device-verified. Library toolbar overflow = Aa.E.p -> Aa.E.b -> material3 DropdownMenu (C8543s.a, transparent container) whose content Aa.G draws the background via AndroidView(factory Aa.F case 0) = BlurView inflated from layout option_button_blur and bound to BlurTarget (Qb.o.f15893a); items are Compose siblings. Entries come from LibraryComposeContentFragment.v1 (library_edit_bottom_sheet_edit_categories). Hook point is the framework-named BlurView.onAttachedToWindow/onDetachedFromWindow plus its single interface-typed controller field, so no obfuscated host member is called."
+  },
   "capabilities": {
     "glass": true,
     "glassScrollCollapse": true,
+    "glassPopupMenu": true,
     "cellular": true,
     "staticCollapsedIntercept": false,
     "playerRecovery": true,
